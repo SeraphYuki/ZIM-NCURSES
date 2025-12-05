@@ -3,7 +3,6 @@
 #include <string.h>
 #include "config.h"
 #include "thoth.h"
-#include "window.h"
 
 void Thoth_Config_Read(Thoth_Config *cfg){
 	memset(cfg, 0, sizeof(Thoth_Config));

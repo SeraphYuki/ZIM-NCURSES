@@ -1,6 +1,5 @@
 #include "thoth.h"
 #include "log.h"
-#include "window.h"
 #include "file_browser.h"
 #include <stdio.h>
 #include <fcntl.h>

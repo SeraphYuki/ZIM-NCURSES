@@ -5,7 +5,6 @@
 #include <sys/stat.h>
 #include <ncurses.h>
 #include "text_editor.h"
-#include "window.h"
 #include "memory.h"
 #include "x11.h"
 #include "config.h"
