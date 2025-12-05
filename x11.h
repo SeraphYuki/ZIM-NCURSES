@@ -10,6 +10,7 @@
 #define X11_NUM_OF_RET_KEYS 32*8
 
 void X11_WithdrawWindow();
+XIC X11_GetIC();
 void X11_Init();
 void X11_NextEvent(XEvent *ev);
 void X11_Close();

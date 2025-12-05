@@ -330,6 +330,7 @@ static void UpdateScroll(Thoth_Editor *t){
 		t->file->scroll = nLinesToCursor;
 	else if(nLinesToCursor >= (t->file->scroll + COLS) - t->logY )
 		t->file->scroll = (nLinesToCursor - COLS)+1+t->logY;
+
 }
 
 
@@ -3325,9 +3326,11 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		else if(t->logging == THOTH_LOGMODE_FILEBROWSER){ sprintf(buffer, "O: "); }        
 		else if(t->logging == THOTH_LOGMODE_ALERT){ sprintf(buffer, "A: "); }        
 		Thoth_mvprintw(0, 0, buffer, strlen(buffer));
+		wclrtoeol(stdscr);
 	
 		if(t->loggingText && strlen(t->loggingText) > 0){
 			Thoth_mvprintw(strlen(buffer), 0, t->loggingText, strlen(t->loggingText));
+			wclrtoeol(stdscr);
 		}
 
 		if(t->logging == THOTH_LOGMODE_HELP){
@@ -3374,6 +3377,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 				if(help[k] == '\n'){
 
 						Thoth_mvprintw(t->logX, t->logY, &help[last], k-last);
+						wclrtoeol(stdscr);
+
 						last = k;
 						t->logY++;
 				}
@@ -3416,6 +3421,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 						}
 						index++;
 						Thoth_mvprintw(t->logX, t->logY++, name, strlen(name));
+						wclrtoeol(stdscr);
 					}
 				}
 			}
@@ -3511,7 +3517,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 							if(params[m] >= 30){
 								int ansi = params[m]-30;
 								if(ansi >= 7) ansi = 7;
-								attron(COLOR_PAIR(THOTH_TE_COLOR_BLACK) + ansi);
+								attron(COLOR_PAIR(THOTH_TE_COLOR_BLACK + ansi));
 							} 
 							// if(params[m] == 01){
 							//     attron(COLOR_PAIR(BOLD));
@@ -3532,13 +3538,15 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 			}
 
 
-			if(x >= LINES || t->loggingText[k] == '\n'){
+			if(x >= COLS || t->loggingText[k] == '\n'){
 				last = k;
+				move(y,x);
+				wclrtoeol(stdscr);
+
 				y++;
 				x = 0;
-			// if(LINES != x) k++;
-				if(x < LINES)
-					continue;
+			// if(COLS != x) k++;
+				continue;
 			}
 
 			Thoth_mvprintw(x, y, &t->loggingText[k], 1);
@@ -3547,7 +3555,6 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		// fclose(logfp);
 		// free(t->loggingText);
 		// t->loggingText = NULL;
-
 		t->logY = y;
 	}
 	attron(COLOR_PAIR(THOTH_COLOR_LINE_NUM));        
@@ -3556,7 +3563,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 	char buffer[10];
 
 	for(k = 0; k < LINES; k++){
-		sprintf(buffer, "%.4i", t->file->scroll+k+1);
+		sprintf(buffer, "%.4i ", t->file->scroll+k+1);
 		Thoth_mvprintw(0, t->logY+k, buffer, strlen(buffer));
 	
 	}
@@ -3695,8 +3702,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 				if(c =='\n'){
 			
-					move(t->logY+y,t->logX+x);
-					clrtoeol();
+					move(t->logY+y,t->logX+x-1);
+					wclrtoeol(stdscr);
 					y++;
 					x = 0;
 					ctOffset = ++k;
@@ -3829,6 +3836,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 				ctOffset = ++k;
 			}
 		}
+		wclrtoeol(stdscr);
 
 //	 } else {  easy selections have no highlighting
 //	 }

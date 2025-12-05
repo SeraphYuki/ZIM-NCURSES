@@ -81,6 +81,14 @@ void Event(Thoth_t *t){
 		
 		int key = t->key & THOTH_ENTER_KEY ? t->key ^ THOTH_ENTER_KEY : t->key;
 		char *str = XKeysymToString(XLookupKeysym(&ev.xkey,0));
+
+		KeySym keysym;
+		Status status;
+		char buf[16];
+		int c = Xutf8LookupString(X11_GetIC(), &ev.xkey, buf, 15,&keysym, &status);
+		Xutf8LookupString(X11_GetIC(), &ev.xkey, buf, c,&keysym, &status);
+
+
 		if(strcmp(str, "Control_L") == 0) key |= THOTH_CTRL_KEY;
 		else if(strcmp(str, "Control_R") == 0) key |= THOTH_CTRL_KEY;
 		else if(strcmp(str, "Alt_L") == 0) key |= THOTH_ALT_KEY;
@@ -97,13 +105,11 @@ void Event(Thoth_t *t){
 		else if(strcmp(str, "Down") == 0) key |= THOTH_ARROW_DOWN;
 		else
 			key = (t->key&0xFF00) | (str[0] & 0xFF);
+		
+		if((key & THOTH_CTRL_KEY) == 0 && key != 127 && key != 27 && key != 9) 
+			key = (key&0xFF00) | (buf[0] & 0xFF);
 
-
-		// if(key != t->key || key & THOTH_ARROW_RIGHT || key & THOTH_ARROW_UP || key & THOTH_ARROW_DOWN || key & THOTH_ARROW_LEFT)
-			// t->state = THOTH_STATE_UPDATE;
-			
 		t->key = key;
-
 
 	} else if(ev.type == KeyRelease) {
 		char *str = XKeysymToString(XLookupKeysym(&ev.xkey,0));
@@ -147,13 +153,13 @@ int main(int argc, char **argv){
 
 	Thoth_Editor_Init(&t.te, &t.cfg);
 	X11_Init();
-//	if(argc > 1){
-//		int k;
-//		for(k = 0; k < argc-1; k++)
-//			Thoth_Editor_LoadFile(&t.te, argv[1+k]);
-//	}
-//	else if(t.te.nFiles == 0)
-		Thoth_Editor_LoadFile(&t.te, "main.c");
+	if(argc > 1){
+		int k;
+		for(k = 0; k < argc-1; k++)
+			Thoth_Editor_LoadFile(&t.te, argv[1+k]);
+	}
+	else if(t.te.nFiles == 0)
+		Thoth_Editor_LoadFile(&t.te, NULL);
 
 
 	// u32 currTime;
@@ -210,7 +216,6 @@ int main(int argc, char **argv){
 
 	   }
 	}
-
 
 	return 0;
 }

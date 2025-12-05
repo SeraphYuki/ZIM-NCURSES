@@ -11,7 +11,12 @@
 static Display *display;
 static Window window, ourWindow, root, *children, parent;
 static GC gc;
+static XIC ic;
+static XIM xim;
+
 static int x11Init = 0;
+
+XIC X11_GetIC(){ return ic;}
 
 void X11_Init(){
     display = XOpenDisplay(0);
@@ -65,7 +70,12 @@ void X11_Init(){
 
     gc = XCreateGC(display, ourWindow, 0, NULL);
 
+    xim = XOpenIM(display,NULL,NULL,NULL);
+    ic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, 
+        XNClientWindow, window, NULL);
+
 	XSelectInput(display, window, KeyPress | KeyRelease);
+
     x11Init = 1;
 }
 void X11_NextEvent(XEvent *ev){
@@ -76,36 +86,6 @@ void X11_Close(){
     XFreeGC(display,gc);
     XCloseDisplay(display);
     x11Init = 0;
-}
-
-int X11_GetGlobalKeys(int *ret){
-    char keys[32];
-    XQueryKeymap(display, keys);
-    int k, returnOne = 0;
-    for(k = 0; k < 32; k++){ 
-        if(keys[k]) {
-            int f;
-            for(f = 0; f < 8; f++){
-                if(keys[k] & 0x01 << f){
-                    XKeyEvent keyEvent;
-                    keyEvent.keycode = (k*8)+f;
-                    keyEvent.display = display;
-                    char *str = XKeysymToString(XLookupKeysym(&keyEvent, 0));
-                    if(strlen(str) == 1) ret[(k*8)+f] = (int)str[0];
-                    else if(strcmp(str, "equal") == 0) ret[(k*8)+f] = '=';
-                    else if(strcmp(str, "minus") == 0) ret[(k*8)+f] = '-';
-                    else if(strcmp(str, "Control_L") == 0) ret[(k*8)+f] = X11_CONTROL_KEY;
-                    else if(strcmp(str, "Control_R") == 0) ret[(k*8)+f] = X11_CONTROL_KEY;
-                    else if(strcmp(str, "Alt_L") == 0) ret[(k*8)+f] = X11_ALT_KEY;
-                    else if(strcmp(str, "Alt_R") == 0) ret[(k*8)+f] = X11_ALT_KEY;
-                    else if(strcmp(str, "Super_L") == 0) ret[(k*8)+f] = X11_SUPER_KEY;
-                    else if(strcmp(str, "Super_R") == 0) ret[(k*8)+f] = X11_SUPER_KEY;
-                    returnOne = 1;
-                }
-            }
-        }
-    }
-    return returnOne;
 }
 
 void X11_WithdrawWindow(){

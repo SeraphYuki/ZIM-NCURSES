@@ -22,13 +22,13 @@
 # # linuxa
 CC=gcc
 EXECUTABLE=zim
-CFLAGS = -g -Wall -lm -DLINUX_COMPILE -DLINUX_INSTALL
+CFLAGS = -g -Wall -lm -DLINUX_COMPILE -DLINUX_INSTALL -m64
 
 NCURSESLIBS = $(shell pkg-config --libs ncurses)
 X11LIBS = $(shell pkg-config --libs x11)
-X11LIBS ?= $(shell pkg-config --libs libva-x11)
-X11LIBS ?= $(shell pkg-config --libs x11-xcb)
-LDLIBS = -lm -lutil -static-libgcc $(NCURSESLIBS) $(X11LIBS)
+
+LDLIBS = -lm -lutil -static-libgcc $(NCURSESLIBS) $(X11LIBS) \
+$(XKBLIBS) $(VALIBS) $(XCBLIBS)
 # add -pg for gdb
 
 
