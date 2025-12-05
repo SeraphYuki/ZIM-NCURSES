@@ -328,8 +328,8 @@ static void UpdateScroll(Thoth_Editor *t){
 
 	if(nLinesToCursor < t->file->scroll)
 		t->file->scroll = nLinesToCursor;
-	else if(nLinesToCursor >= (t->file->scroll + COLS) - t->logY )
-		t->file->scroll = (nLinesToCursor - COLS)+1+t->logY;
+	else if(nLinesToCursor >= (t->file->scroll + LINES) - t->logY )
+		t->file->scroll = (nLinesToCursor - LINES)+1+t->logY;
 
 }
 
@@ -338,11 +338,11 @@ static void UpdateScrollCenter(Thoth_Editor *t){
 
 	int nLinesToCursor = GetNumLinesToPos(t->file->text,t->cursors[t->nCursors-1].pos);
 
-	if(nLinesToCursor >= t->file->scroll && nLinesToCursor < t->file->scroll + COLS - t->logY){
+	if(nLinesToCursor >= t->file->scroll && nLinesToCursor < t->file->scroll + LINES - t->logY){
 		return;
 	}	
 
-	t->file->scroll = nLinesToCursor  - (COLS/2);
+	t->file->scroll = nLinesToCursor  - (LINES/2);
 
 	if(t->file->scroll < 0) t->file->scroll = 0;
 
