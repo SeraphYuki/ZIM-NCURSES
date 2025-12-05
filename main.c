@@ -217,6 +217,9 @@ int main(int argc, char **argv){
 	   }
 	}
 
+
+	X11_WithdrawWindow();
+	X11_Close();
 	return 0;
 }
 #endif
