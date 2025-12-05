@@ -1,1 +1,2 @@
-ncurses ZIM
+![Screenshot](screenshot.png)
+<br>ncurses
