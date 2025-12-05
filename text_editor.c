@@ -2329,7 +2329,7 @@ static void ScrollScreen(Thoth_Editor *t, Thoth_EditorCmd *c){
 	RemoveSelections(t);
 	RemoveExtraCursors(t);
 
-	int scroll = COLS;
+	int scroll = LINES;
 	int k = 0;
 
 	if(c->num < 0){
@@ -3166,8 +3166,8 @@ static int CursorPos(Thoth_Editor *t, int x, int y){
 
 	if(x < t->logX) x = t->logX;
 	if(x < t->logY) x = t->logY;
-	if(y > COLS - t->logY) y = COLS - t->logY;
-	if(x > LINES - t->logX) x = LINES - t->logX;
+	if(y > LINES - t->logY) y = LINES - t->logY;
+	if(x > COLS - t->logX) x = COLS - t->logX;
 
 	x -= t->logX;
 	y -= t->logY;
@@ -3181,7 +3181,7 @@ static int CursorPos(Thoth_Editor *t, int x, int y){
 		t->file->scroll = t->file->scroll-(3-y) >= 0 ? t->file->scroll-(3-y) : 0;
 	} else {
 
-		int yOver = (y+3) - ((COLS-1) - t->logY);
+		int yOver = (y+3) - ((LINES-1) - t->logY);
 
 		if(yOver >= 1){
 			int k;
@@ -3298,8 +3298,8 @@ void Thoth_mvprintw(int x, int y, char *str, int len){
 }
 void Thoth_Editor_Draw(Thoth_Editor *t){
 
-	int screenHeight = COLS;
-	int screenWidth = LINES;
+	int screenHeight = LINES;
+	int screenWidth = COLS;
 
 
 	t->logY = 0;
@@ -3391,8 +3391,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 			int nFiles = t->logging == THOTH_LOGMODE_FILEBROWSER ? t->fileBrowser.nFiles : t->nFiles;
 			
 			k = 0;
-			if(nFiles > COLS-(t->logY+1)){
-				k = t->logIndex-(COLS-(t->logY+1));
+			if(nFiles > LINES-(t->logY+1)){
+				k = t->logIndex-(LINES-(t->logY+1));
 				if(k < 0) k = 0;
 			}
 
@@ -3699,10 +3699,11 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 				}
 
 				addedStr:
+				if(c =='\r') continue;
 
 				if(c =='\n'){
 			
-					move(t->logY+y,t->logX+x-1);
+					move(t->logY+y,t->logX+x);
 					wclrtoeol(stdscr);
 					y++;
 					x = 0;
@@ -3863,8 +3864,10 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					x = 0;
 					continue;
 				} else if(text[k] == '\t'){
-					if(k >= renderStart)
-						Thoth_mvprintw(t->logX+x, t->logY+y, &text[k], 1);
+					if(k >= renderStart){
+							char *buf = "    ";
+							Thoth_mvprintw(t->logX+x, t->logY+y, buf, 4);
+						}
 					x += 4;
 					continue;
 				}
