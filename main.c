@@ -1,6 +1,7 @@
-#include <stdio.h>
+	#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <ncurses.h>
@@ -109,6 +110,7 @@ void Event(Thoth_t *t){
 		if((key & THOTH_CTRL_KEY) == 0 && key != 127 && key != 27 && key != 9) 
 			key = (key&0xFF00) | (buf[0] & 0xFF);
 
+
 		t->key = key;
 
 	} else if(ev.type == KeyRelease) {
@@ -210,7 +212,7 @@ int main(int argc, char **argv){
 
 			   t.key = t.key & 0xff00;
 
-		   Thoth_Editor_Draw(&t.te);        
+			   Thoth_Editor_Draw(&t.te);        
 			}    
 		   t.state = THOTH_STATE_RUNNING;
 

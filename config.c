@@ -39,7 +39,7 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->keybinds[THOTH_SwitchFile] = THOTH_CTRL_KEY|'p';
 	cfg->keybinds[THOTH_SaveAsFile] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'s';
 	cfg->keybinds[THOTH_SaveFile] = THOTH_CTRL_KEY|'s';
-	cfg->keybinds[THOTH_ToggleComment] = THOTH_CTRL_KEY|'/';
+	cfg->keybinds[THOTH_ToggleComment] = THOTH_ALT_KEY|'/';
 	cfg->keybinds[THOTH_MoveBrackets] = THOTH_CTRL_KEY|'m';
 	cfg->keybinds[THOTH_SelectBrackets] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'j';
 	cfg->keybinds[THOTH_GotoLine] = THOTH_CTRL_KEY|'g';
@@ -56,9 +56,9 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->keybinds[THOTH_MoveLines_UP] = 	'j'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_MoveLines_DOWN] = 	'k'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_MoveByWords_BACK] = 'h'|THOTH_ALT_KEY|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_MoveByWords_FORWARD] = 'l'|THOTH_ALT_KEY|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_IndentLine_FORWARD] = ']'|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_IndentLine_BACK] = '['|THOTH_CTRL_KEY;
+	cfg->keybinds[THOTH_MoveByWords_FORWARD] = 'l'|THOTH_ALT_KEY|THOTH_ALT_KEY;
+	cfg->keybinds[THOTH_IndentLine_FORWARD] = ']'|THOTH_ALT_KEY;
+	cfg->keybinds[THOTH_IndentLine_BACK] = '['|THOTH_ALT_KEY;
 	cfg->keybinds[THOTH_ExpandSelectionWords_BACK] = THOTH_ARROW_LEFT|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD] = THOTH_ARROW_RIGHT|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_ScrollScreen_UP] = THOTH_ARROW_UP|THOTH_SHIFT_KEY;

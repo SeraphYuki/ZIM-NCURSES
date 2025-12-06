@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <ncurses.h>
 #include <string.h>
-#ifdef LINUX_COMPILE
+	#ifdef LINUX_COMPILE
 #include <termios.h>
 #include <pty.h>
 #include <sys/wait.h>
@@ -213,6 +213,7 @@ static void StartLogging(Thoth_Editor *t, int mode){
 
 static void EndLogging(Thoth_Editor *t){
 	t->logIndex = -1;
+	wclear(stdscr);
 
 	if(t->loggingText) free(t->loggingText);
 
@@ -2811,29 +2812,29 @@ static void ExecuteCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 	typedef void (*EditFunc)(Thoth_Editor*, Thoth_EditorCmd*);
 
 	EditFunc BufferExpandFuncs[2] = {
-	    AddCharacters,
-	    // RemoveCharacters
+		AddCharacters,
+		// RemoveCharacters
 	};
 	int BufferExpandFuncsLen = sizeof(BufferExpandFuncs)/sizeof(EditFunc);
 
 	int k;
 	for(k = 0; k < BufferExpandFuncsLen; k++){
-	    if(BufferExpandFuncs[k] == c->Execute
-	        && t->lastCmd && (*t->lastCmd)->Execute == BufferExpandFuncs[k]
-	         && c->keys && !IsToken(c->keys[0]) && 
-	         lastKeys && !IsToken((*lastKeys)[lastLen-1]))
-	    	{
+		if(BufferExpandFuncs[k] == c->Execute
+			&& t->lastCmd && (*t->lastCmd)->Execute == BufferExpandFuncs[k]
+			 && c->keys && !IsToken(c->keys[0]) && 
+			 lastKeys && !IsToken((*lastKeys)[lastLen-1]))
+			{
 
-	        (*t->lastCmd)->num = lastLen;
-	        (*t->lastCmd)->keys = realloc(*lastKeys, lastLen + strlen(c->keys) + 1);
-	        strcpy(&((*lastKeys)[lastLen]),c->keys);
+			(*t->lastCmd)->num = lastLen;
+			(*t->lastCmd)->keys = realloc(*lastKeys, lastLen + strlen(c->keys) + 1);
+			strcpy(&((*lastKeys)[lastLen]),c->keys);
 					
-	        // (*t->lastCmd)->Execute(t,*t->lastCmd);
-	        ExpandAddCharacters(t, *t->lastCmd);
-	        (*t->lastCmd)->num = lastLen + strlen(c->keys);
+			// (*t->lastCmd)->Execute(t,*t->lastCmd);
+			ExpandAddCharacters(t, *t->lastCmd);
+			(*t->lastCmd)->num = lastLen + strlen(c->keys);
 
-	        break;
-	    }
+			break;
+		}
 	}
 	
 	if(k == BufferExpandFuncsLen){
@@ -3007,14 +3008,14 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 
 	// logfile = fopen("log.txt", "wb");
 
-    initscr();
-    curs_set(0);
+	initscr();
+	curs_set(0);
 	raw();
 	cbreak();
-    noecho();
-    keypad(stdscr, FALSE);
-    start_color();
-    use_default_colors();
+	noecho();
+	keypad(stdscr, FALSE);
+	start_color();
+	use_default_colors();
 
 	init_pair(THOTH_COLOR_SIDE_NUMBERS, COLOR_WHITE, COLOR_BLACK);
 	init_pair(THOTH_COLOR_NORMAL, COLOR_WHITE, COLOR_BLACK);
@@ -3043,8 +3044,8 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	init_pair(THOTH_TE_COLOR_GREEN, COLOR_GREEN ,COLOR_BLACK);
 	init_pair(THOTH_TE_COLOR_MAGENTA, COLOR_MAGENTA ,COLOR_BLACK);
 
-    wclear(stdscr);
-    timeout(50);
+	wclear(stdscr);
+	timeout(50);
 
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_UP] , 0}, "", -1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_DOWN] , 0}, "", 1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
@@ -3346,8 +3347,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					"ctrl+h (move left) ctrl+l (move right) ctrl+j (move up) ctrl+k (move down)\n"
 					"shift+arrow up/down (scroll screen up/down)\n"
 					"ctrl+alt+arrow right/left (expand selection by words right/left)\n"
-					"ctrl+alt+[ (indent backward)\n"
-					"ctrl+alt+] (indent forward)\n"
+					"alt+[ (indent backward)\n"
+					"alt+] (indent forward)\n"
 					"ctrl+alt+h (move by words left) ctrl+alt+l (move by words right)\n"
 					"ctrl+shift+l (expand selection by a line)\n"
 					"ctrl+shift+k (delete line)\n"
@@ -3359,7 +3360,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					"ctrl+F (case senstive search)\n"
 					"ctrl+m (move brackets) (moves cursor between the { }, ( ), [ ], of the current scope) (either to the end, or to the beginning if its at the end)\n"
 					"ctrl+shift+j (select brackets) (selects everything between the brackets)\n"
-					"ctrl+/ (toggle comment) (adds or removes // for the line to comment) (todo: mutli-line)\n"
+					"alt+/ (toggle comment) (adds or removes // for the line to comment) (todo: mutli-line)\n"
 					"ctrl+shift+arrow up/down (move line up/down) (moves the entire line the cursors on, or every line in the selection by a line)\n"
 					"ctrl+o (open file)\n"
 					"ctrl+shift+o (file browser)\n"
@@ -3403,6 +3404,10 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 				}
 				int logNameLen = logName ? strlen(logName) : 0;
 
+				char *tab = "    ";
+				attron(COLOR_PAIR(THOTH_COLOR_NORMAL));
+				Thoth_mvprintw(0, t->logY, tab, strlen(tab));
+
 				if(logNameLen <= nameLen){
 					if(logNameLen == 0 || CaseLowerStrnCmp(logName, name, logNameLen)){
 						if(index == t->logIndex){
@@ -3417,7 +3422,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 								attron(COLOR_PAIR(THOTH_COLOR_LOG_UNSELECTED));
 						}
 						index++;
-						Thoth_mvprintw(t->logX, t->logY++, name, strlen(name));
+						Thoth_mvprintw(4, t->logY++, name, strlen(name));
 						wclrtoeol(stdscr);
 					}
 				}
@@ -3528,12 +3533,11 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		wclrtoeol(stdscr);
 		t->logY = y;
 	}
-	char *text = t->file->text;
-	if(!text){
-	}
 
+	wrefresh(stdscr);
 	// end logs
-
+	char *text = t->file->text;
+	
 	t->file->textLen = strlen(text);
 
 	int ctOffset = 0;
@@ -3566,242 +3570,244 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 	y = 0;
 
-		int renderTo = scrollPosMax, renderStart = scrollPos;
+	int renderTo = scrollPosMax, renderStart = scrollPos;
 
-		for(k = scrollPos; k < renderStart; k++){
-			if(text[k] == '\n'){
-				y++;
-			}
+	for(k = scrollPos; k < renderStart; k++){
+		if(text[k] == '\n'){
+			y++;
 		}
+	}
 
-		ctOffset = k;
+	ctOffset = k;
 
-		renderTo++; // include NULL term token
-	
-		// begin render files text
+	renderTo++; // include NULL term token
+
+	// begin render files text
 
 
-		for(; k < renderTo; ){
+	for(; k < renderTo; ){
 
-			int comment = 0;
-			int string = 0;
+		int comment = 0;
+		int string = 0;
 
-			char c = text[k];
+		char c = text[k];
 
-			char token = IsToken(c);
-			if(!token){
+		char token = IsToken(c);
+		if(!token){
 
-			   if((k - ctOffset) == 1 && IsDigit(text[k-1])){
+		   if((k - ctOffset) == 1 && IsDigit(text[k-1])){
 
-					if(text[k] == 'x')
-					   for(++k; k < renderTo && IsHexadecimal(text[k]); k++);
-				   else 
-					   for(; k < renderTo && IsDigit(text[k]); k++);
+				if(text[k] == 'x')
+				   for(++k; k < renderTo && IsHexadecimal(text[k]); k++);
+			   else 
+				   for(; k < renderTo && IsDigit(text[k]); k++);
 
-				   attron(COLOR_PAIR(THOTH_COLOR_NUM));
-				   Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
-				   x += k - ctOffset;
-				   ctOffset = k;
+			   attron(COLOR_PAIR(THOTH_COLOR_NUM));
+			   Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+			   x += k - ctOffset;
+			   ctOffset = k;
 
-				   continue;
-			   }
+			   continue;
+		   }
 
-			   k++;
-			   // add to temp str
+		   k++;
+		   // add to temp str
 
-			} else {
+		} else {
+			if(k - ctOffset > 0){
 
-				if(k - ctOffset > 0){
+				if((k - ctOffset) == 1 && IsDigit(text[k-1])){
+					attron(COLOR_PAIR(THOTH_COLOR_NUM));
+					Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], 1);
+					x++;
+					ctOffset = k;
+					goto addedStr;
+				}
 
-					if((k - ctOffset) == 1 && IsDigit(text[k-1])){
-						attron(COLOR_PAIR(THOTH_COLOR_NUM));
-						Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], 1);
-						x++;
+				for(int m = 0; m < (int)(sizeof(keywords)/sizeof(char *)); m++){
+					if(strlen(keywords[m]) == (k - ctOffset) && 
+						memcmp(&text[ctOffset], keywords[m], (k - ctOffset)) == 0) {
+						
+						attron(COLOR_PAIR(THOTH_COLOR_KEYWORD));
+						Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+
+						x += k - ctOffset;
 						ctOffset = k;
 						goto addedStr;
+
 					}
-
-					for(int m = 0; m < (int)(sizeof(keywords)/sizeof(char *)); m++){
-						if(strlen(keywords[m]) == (k - ctOffset) && 
-							memcmp(&text[ctOffset], keywords[m], (k - ctOffset)) == 0) {
-							
-							attron(COLOR_PAIR(THOTH_COLOR_KEYWORD));
-							Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
-
-							x += k - ctOffset;
-							ctOffset = k;
-							goto addedStr;
-
-						}
-					}
-				
-					if(c == '('){
-						// function def example(), k - ctOffset, ctOffset stops at beginning of non tokens, unless a digit or a keyword
-						// so that we can change colors at the token after the def
-
-						attron(COLOR_PAIR(THOTH_COLOR_FUNCTION));
-						Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset); 
-						x += k - ctOffset;
-						attron(COLOR_PAIR(THOTH_COLOR_FUNCTION));
-						Thoth_mvprintw(t->logX+x, t->logY+y, &text[k], 1);
-						x++;
-						k++;
-						ctOffset = k;
-						continue;
-					}
-		
-					attron(COLOR_PAIR(THOTH_COLOR_NORMAL));
-					Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
-					x += k - ctOffset;
-
-					ctOffset = k;
 				}
-
-				addedStr:
-				if(c =='\r') continue;
-
-				if(c =='\n'){
 			
-					move(t->logY+y,t->logX+x);
-					wclrtoeol(stdscr);
-					y++;
-					x = 0;
-					ctOffset = ++k;
-					continue;
-				}
+				if(c == '('){
+					// function def example(), k - ctOffset, ctOffset stops at beginning of non tokens, unless a digit or a keyword
+					// so that we can change colors at the token after the def
 
-				if(c =='\t'){
-					attroff(COLOR_PAIR(THOTH_COLOR_NORMAL));
-					char *buf = "    ";
-					Thoth_mvprintw(t->logX+x, t->logY+y, buf, 4);
-					x += 4;
-					ctOffset = ++k;
-					continue;
-				}
-
-				if(c ==' '){
-					attroff(COLOR_PAIR(THOTH_COLOR_NORMAL));
-					char *buf = " ";
-					Thoth_mvprintw(t->logX+x, t->logY+y, buf, 1);
-					x++;
-					ctOffset = ++k;
-					continue;
-				}
-
-				if(c == '/' && text[k+1] == '/') comment = 1;
-				else if(c == '/' && text[k+1] == '*') comment = 2;
-				else if(c == '"') string = 1;
-				else if(c == '\'') string = 2;
-		
-		
-				if(c == ')' || c == '('){
 					attron(COLOR_PAIR(THOTH_COLOR_FUNCTION));
-					Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], 1);
-					x++;
-					ctOffset = ++k;
-					continue;
-				}
-				
-				if(c != ' ' && c != '(' && c != ')' && token && !comment && !string){
-					attron(COLOR_PAIR(THOTH_COLOR_TOKEN));
-					Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], 1);
-					x++;
-					ctOffset = ++k;
-					continue;
-				}
-				
-
-				// if(!comment && !string) k++;
-
-				if(comment){
-
-
-					k += 2;
-
-					if(comment == 1){
-						for (; k < renderTo; k++){
-							if(text[k] == '\n'){  break; }
-						}
-
-
-					} else { /* comment */
-
-
-					for(;k < (renderTo-1) && !(text[k] == '*' && text[k+1] == '/'); k++){
-						if(text[k] == '\n'){
-							attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
-							Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
-							ctOffset = k;
-							x = 0;
-							y++;
-						}
-					}
-						if(k < renderTo-1){
-							k++; // will run to end of file otherwise. 
-						}
-					}
-
-					if(k > 0 && text[k-1] == '*' && text[k] == '/') k++;
-
-					attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
-					Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+					Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset); 
 					x += k - ctOffset;
+					attron(COLOR_PAIR(THOTH_COLOR_FUNCTION));
+					Thoth_mvprintw(t->logX+x, t->logY+y, &text[k], 1);
+					x++;
+					k++;
 					ctOffset = k;
-					comment = 0;
 					continue;
 				}
 
+				attron(COLOR_PAIR(THOTH_COLOR_NORMAL));
+				Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+				x += k - ctOffset;
 
-				if(string){
+				ctOffset = k;
+			}
 
+			addedStr:
+			if(c =='\r') continue;
 
-					int escaped = 0;
+			if(c =='\n'){
+		
+				move(t->logY+y,t->logX+x);
+				wclrtoeol(stdscr);
+				y++;
+				x = 0;
+				ctOffset = ++k;
+				continue;
+			}
 
-					while(k < renderTo){
+			if(c =='\t'){
+				attroff(COLOR_PAIR(THOTH_COLOR_NORMAL));
+				char *buf = "    ";
+				Thoth_mvprintw(t->logX+x, t->logY+y, buf, 4);
+				x += 4;
+				ctOffset = ++k;
+				continue;
+			}
 
-						k++;
-						if(k == renderTo) break;
-
-
-						if(text[k] == '\n') { break; }
-						if(text[k] == '"' && string == 1 && !escaped) { break; }
-						if(text[k] == '\'' && string == 2 && !escaped) { break; }
-
-
-						if(text[k] == '\\' && !escaped)
-							escaped = 1;
-						else
-							escaped = 0;
-
-
-					}
-					if(text[k] != '\n')
-						k++;
-					
-					if(k == renderTo) break;
-					if(k >= renderTo-1) k--;
-
-					attron(COLOR_PAIR(THOTH_COLOR_STRING));
-					Thoth_mvprintw(t->logX+x, t->logY+y,
-&text[ctOffset], k - ctOffset);
-									
-					x += k - ctOffset;
-					ctOffset = k;
-					string = 0;
-
-					continue;
-				}
-
+			if(c ==' '){
+				attroff(COLOR_PAIR(THOTH_COLOR_NORMAL));
+				char *buf = " ";
+				Thoth_mvprintw(t->logX+x, t->logY+y, buf, 1);
 				x++;
 				ctOffset = ++k;
+				continue;
 			}
+
+			if(c == '/' && text[k+1] == '/') comment = 1;
+			else if(c == '/' && text[k+1] == '*') comment = 2;
+			else if(c == '"') string = 1;
+			else if(c == '\'') string = 2;
+
+
+			if(c == ')' || c == '('){
+				attron(COLOR_PAIR(THOTH_COLOR_FUNCTION));
+				Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], 1);
+				x++;
+				ctOffset = ++k;
+				continue;
+			}
+			
+			if(c != ' ' && c != '(' && c != ')' && token && !comment && !string){
+				attron(COLOR_PAIR(THOTH_COLOR_TOKEN));
+				Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], 1);
+				x++;
+				ctOffset = ++k;
+				continue;
+			}
+			
+
+			// if(!comment && !string) k++;
+
+			if(comment){
+
+
+				k += 2;
+
+				if(comment == 1){
+					for (; k < renderTo; k++){
+						if(text[k] == '\n'){  break; }
+					}
+
+
+				} else { /* comment */
+
+
+				for(;k < (renderTo-1) && !(text[k] == '*' && text[k+1] == '/'); k++){
+					if(text[k] == '\n'){
+						attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
+						Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+						ctOffset = k;
+						x = 0;
+						y++;
+					}
+				}
+					if(k < renderTo-1){
+						k++; // will run to end of file otherwise. 
+					}
+				}
+
+				if(k > 0 && text[k-1] == '*' && text[k] == '/') k++;
+
+				attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
+				Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+				x += k - ctOffset;
+				ctOffset = k;
+				comment = 0;
+				continue;
+			}
+
+
+			if(string){
+
+
+				int escaped = 0;
+
+				while(k < renderTo){
+
+					k++;
+					if(k == renderTo) break;
+
+
+					if(text[k] == '\n') { break; }
+					if(text[k] == '"' && string == 1 && !escaped) { break; }
+					if(text[k] == '\'' && string == 2 && !escaped) { break; }
+
+
+					if(text[k] == '\\' && !escaped)
+						escaped = 1;
+					else
+						escaped = 0;
+
+
+				}
+				if(text[k] != '\n')
+					k++;
+				
+				if(k == renderTo) break;
+				if(k >= renderTo-1) k--;
+
+				attron(COLOR_PAIR(THOTH_COLOR_STRING));
+				Thoth_mvprintw(t->logX+x, t->logY+y,&text[ctOffset], k - ctOffset);
+								
+				x += k - ctOffset;
+				ctOffset = k;
+				string = 0;
+
+				continue;
+			}
+
+			x++;
+			ctOffset = ++k;
 		}
+	}
+	wclrtoeol(stdscr);		
+	for(; y < LINES; y++){
+		move(t->logY+y+1,0);
 		wclrtoeol(stdscr);
+	}
 // draw line numbers
 	attron(COLOR_PAIR(THOTH_COLOR_LINE_NUM));
 	char buffer[10];
 
-	for(k = 0; k < LINES; k++){
+	for(y = t->logY, k = 0; y < LINES; y++, k++){
 		sprintf(buffer, "%.4i ", t->file->scroll+k+1);
 		Thoth_mvprintw(0, t->logY+k, buffer, strlen(buffer));
 	
@@ -3876,11 +3882,9 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 			Thoth_mvprintw(t->logX+x, t->logY+y,space,1);
 	
 		}
-		else
-{
+		else{
 			Thoth_mvprintw(t->logX+x, t->logY+y, &text[c->pos], 1);
-		
-}
+		}
 	}
 
 	int j;
@@ -3981,7 +3985,7 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 			t->quit = 1;
 			return;
 		}
-		if(key == ((( unsigned int)'b') | THOTH_CTRL_KEY)){
+		if(key == ((( unsigned int)'b') | THOTH_ALT_KEY)){
 	
 			if(strlen(t->file->path) > 0){
 				FILE *fp = fopen(t->file->path, "wb");
@@ -4024,7 +4028,7 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 		  size = read(t->ttyMaster, buf, 4096);
 
 		  t->loggingText = realloc(t->loggingText, 
-		  	logLen+size+1);
+			logLen+size+1);
 		  memcpy(&t->loggingText[logLen], buf, size);
 
 		  logLen += size;
