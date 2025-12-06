@@ -1,4 +1,4 @@
-	#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -105,13 +105,14 @@ void Event(Thoth_t *t){
 		else if(strcmp(str, "Up") == 0) key |= THOTH_ARROW_UP;
 		else if(strcmp(str, "Down") == 0) key |= THOTH_ARROW_DOWN;
 		else
-			key = (t->key&0xFF00) | (str[0] & 0xFF);
+			key = (key&0xFF00) | (str[0] & 0xFF);
 		
 		if((key & THOTH_CTRL_KEY) == 0 && key != 127 && key != 27 && key != 9) 
 			key = (key&0xFF00) | (buf[0] & 0xFF);
 
 
 		t->key = key;
+		t->state = THOTH_STATE_UPDATE;     
 
 	} else if(ev.type == KeyRelease) {
 		char *str = XKeysymToString(XLookupKeysym(&ev.xkey,0));
@@ -128,7 +129,6 @@ void Event(Thoth_t *t){
 		else if(strcmp(str, "Down") == 0) t->key ^= THOTH_ARROW_DOWN;
 	}
 
-	t->state = THOTH_STATE_UPDATE;     
 //#ifndef LIBRARY_COMPILE
 //	} else if(ev.type == SDL_EVENT_WINDOW_RESIZED || ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED){
 //		Thoth_Graphics_ViewportXY(&t->graphics, 0, 0);

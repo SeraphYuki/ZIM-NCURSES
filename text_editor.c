@@ -1,3 +1,4 @@
+
 #include "thoth.h"
 #include "log.h"
 #include "file_browser.h"
@@ -8,7 +9,7 @@
 #include <stdlib.h>
 #include <ncurses.h>
 #include <string.h>
-	#ifdef LINUX_COMPILE
+#ifdef LINUX_COMPILE
 #include <termios.h>
 #include <pty.h>
 #include <sys/wait.h>
@@ -3877,7 +3878,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		if((y >= screenHeight) ||
 			x >= screenWidth) continue;
 
-		if(text[c->pos] == '\n' || text[c->pos] == '\t'){
+		if(text[c->pos] == '\n' || text[c->pos] == '\t' || text[c->pos] == '\0'){
 			char *space = " ";
 			Thoth_mvprintw(t->logX+x, t->logY+y,space,1);
 	
