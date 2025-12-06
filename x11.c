@@ -83,10 +83,10 @@ void X11_NextEvent(XEvent *ev){
 }
 void X11_Close(){
     if(!x11Init) return;
+    XDestroyIC(ic);
+    XCloseIM(xim);
     XFreeGC(display,gc);
     XCloseDisplay(display);
-    XCloseIM(xim);
-    XDestroyIC(ic);
     x11Init = 0;
 }
 

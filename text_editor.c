@@ -11,6 +11,7 @@
 #ifdef LINUX_COMPILE
 #include <termios.h>
 #include <pty.h>
+#include <sys/wait.h>
 #endif
 #ifdef WINDOWS_COMPILE
 #include <windows.h>
@@ -454,11 +455,7 @@ static void EventEnter(Thoth_Editor *t, int key){
 
 	Thoth_EditorCmd *command;
 
-	if(key & 0xFF){
-		command = CreateCommand((const unsigned int[]){0}, (const char[]){(char)(key & 0xFF), 0}, 0, SCR_CENT, AddCharacters, UndoAddCharacters);
-	} else {
-		command = CreateCommand((const unsigned int[]){0}, (const char[]){'\n', 0}, 0, SCR_CENT, AddCharacters, UndoAddCharacters);
-	}
+	command = CreateCommand((const unsigned int[]){0}, (const char[]){'\n', 0}, 0, SCR_CENT, AddCharacters, UndoAddCharacters);
 	ExecuteCommand(t,command);
 	FreeCommand(command);
 }
@@ -3012,8 +3009,8 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 
     initscr();
     curs_set(0);
-		raw();
-		cbreak();
+	raw();
+	cbreak();
     noecho();
     keypad(stdscr, FALSE);
     start_color();
@@ -3026,14 +3023,14 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	init_pair(THOTH_COLOR_TOKEN, COLOR_GREEN, COLOR_BLACK);
 	init_pair(THOTH_COLOR_NUM, COLOR_RED, COLOR_BLACK);
 	init_pair(THOTH_COLOR_FUNCTION, COLOR_YELLOW, COLOR_BLACK);
-	init_pair(THOTH_COLOR_STRING, THOTH_COLOR_MAGENTA, COLOR_BLACK);
+	init_pair(THOTH_COLOR_STRING, COLOR_MAGENTA, COLOR_BLACK);
 
 	init_pair(THOTH_COLOR_SELECTED, COLOR_BLACK ,COLOR_CYAN);
 	init_pair(THOTH_COLOR_SELECTED_DIRECTORY, THOTH_COLOR_RED ,COLOR_CYAN);
 	init_pair(THOTH_COLOR_UNSELECTED_DIRECTORY, THOTH_COLOR_RED ,COLOR_WHITE);
 	init_pair(THOTH_COLOR_AUTO_COMPLETE, COLOR_BLACK, COLOR_WHITE);
 	init_pair(THOTH_COLOR_LOG_UNSELECTED, COLOR_BLACK, COLOR_WHITE);
-	init_pair(THOTH_COLOR_CURSOR, COLOR_BLACK ,THOTH_COLOR_MAGENTA);
+	init_pair(THOTH_COLOR_CURSOR, COLOR_BLACK ,COLOR_MAGENTA);
 	init_pair(THOTH_COLOR_FIND, COLOR_BLACK ,COLOR_WHITE);
 	init_pair(THOTH_COLOR_LINE_NUM, COLOR_WHITE ,COLOR_BLACK);
 
@@ -3044,7 +3041,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	init_pair(THOTH_TE_COLOR_YELLOW, COLOR_YELLOW ,COLOR_BLACK);
 	init_pair(THOTH_TE_COLOR_BLUE, THOTH_COLOR_BLUE ,COLOR_BLACK);
 	init_pair(THOTH_TE_COLOR_GREEN, COLOR_GREEN ,COLOR_BLACK);
-	init_pair(THOTH_TE_COLOR_MAGENTA, THOTH_COLOR_MAGENTA ,COLOR_BLACK);
+	init_pair(THOTH_TE_COLOR_MAGENTA, COLOR_MAGENTA ,COLOR_BLACK);
 
     wclear(stdscr);
     timeout(50);
@@ -3429,33 +3426,9 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 	}
 //
 	if(t->logging == THOTH_LOGMODE_CONSOLE){
-
-		int logLen = 0;
+		int logLen = strlen(t->loggingText);
 		
-#ifdef LINUX_COMPILE
-		fd_set rfds;
-		struct timeval tv = {0, 0};
-		char buf[4097];
-
-		logLen = strlen(t->loggingText);
-
-		// while (1) {
-		// if (waitpid(t->ttyPid, NULL, WNOHANG) == pid) {
-		//   break;
-		// }
-
-		FD_ZERO(&rfds);
-		FD_SET(t->ttyMaster, &rfds);
-		if (select(t->ttyMaster + 1, &rfds, NULL, NULL, &tv)) {
-		  int size = read(t->ttyMaster, buf, 4096);
-
-		  t->loggingText = realloc(t->loggingText, logLen+size);
-		  memcpy(&t->loggingText[logLen], buf, size);
-
-		  logLen += size;
-		  t->loggingText[logLen] = 0;
-		}
-#elif WINDOWS_COMPILE
+#if WINDOWS_COMPILE
 		FILE *fp = fopen(THOTH_LOGCOMPILEFILE, "r");
 
 		if(t->loggingText) free(t->loggingText);
@@ -3469,12 +3442,13 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		t->loggingText[logLen] = 0;
 		fclose(fp);
 #endif
-
 		attron(COLOR_PAIR(THOTH_COLOR_NORMAL));
+		y = 0;
+		x = 0;
 
 		int last = 0;
-		for(k = 0; k < logLen; k++){
 
+		for(k = 0; k < logLen; k++){
 			if(t->loggingText[k] == 0x1b){ // ansi
 
 				if(t->loggingText[k+1] == '['){
@@ -3545,30 +3519,15 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 				y++;
 				x = 0;
-			// if(COLS != x) k++;
 				continue;
 			}
-
 			Thoth_mvprintw(x, y, &t->loggingText[k], 1);
 			x++;
 		}
-		// fclose(logfp);
-		// free(t->loggingText);
-		// t->loggingText = NULL;
+		move(y, 0);
+		wclrtoeol(stdscr);
 		t->logY = y;
 	}
-	attron(COLOR_PAIR(THOTH_COLOR_LINE_NUM));        
-
-	// draw line numbers
-	char buffer[10];
-
-	for(k = 0; k < LINES; k++){
-		sprintf(buffer, "%.4i ", t->file->scroll+k+1);
-		Thoth_mvprintw(0, t->logY+k, buffer, strlen(buffer));
-	
-	}
-
-
 	char *text = t->file->text;
 	if(!text){
 	}
@@ -3838,6 +3797,15 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 			}
 		}
 		wclrtoeol(stdscr);
+// draw line numbers
+	attron(COLOR_PAIR(THOTH_COLOR_LINE_NUM));
+	char buffer[10];
+
+	for(k = 0; k < LINES; k++){
+		sprintf(buffer, "%.4i ", t->file->scroll+k+1);
+		Thoth_mvprintw(0, t->logY+k, buffer, strlen(buffer));
+	
+	}
 
 //	 } else {  easy selections have no highlighting
 //	 }
@@ -4010,8 +3978,7 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 		//ctrl/shift/alt or arrowkeys
 
 		if(key == ((( unsigned int)'q') | THOTH_CTRL_KEY)){
-			exit(0);
-				t->quit = 1;
+			t->quit = 1;
 			return;
 		}
 		if(key == ((( unsigned int)'b') | THOTH_CTRL_KEY)){
@@ -4023,13 +3990,15 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 			}
 
 			if(t->loggingText) free(t->loggingText);
-			char *buffer = "compiling:\n\0";
+			char *buffer = t->fileBrowser.directory;
 			t->loggingText = malloc(strlen(buffer)+1);
 			memcpy(t->loggingText, buffer, strlen(buffer));
 			t->loggingText[strlen(buffer)] = 0;
 
+			StartLogging(t, THOTH_LOGMODE_CONSOLE);
 
 #ifdef LINUX_COMPILE
+
 			openpty(&t->ttyMaster, &t->ttySlave, NULL, NULL, NULL);
 
 			t->_stderr = dup(STDERR_FILENO);
@@ -4040,12 +4009,34 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 			t->ttyPid = fork();
 			if (t->ttyPid == 0) {
 				chdir(t->fileBrowser.directory);
-				char *args[] = {t->cfg->makecmd,NULL};
+				char *args[] = {"make",NULL};
 				char *args2[] = {NULL};
 				execvp(args[0], args2);
 			}
+			int logLen = strlen(t->loggingText);
+			fd_set rfds;
 
-			StartLogging(t, THOTH_LOGMODE_CONSOLE);
+			wait(NULL);
+			FD_ZERO(&rfds);
+			FD_SET(t->ttyMaster, &rfds);
+			int size = 0;
+			char buf[4097];
+		  size = read(t->ttyMaster, buf, 4096);
+
+		  t->loggingText = realloc(t->loggingText, 
+		  	logLen+size+1);
+		  memcpy(&t->loggingText[logLen], buf, size);
+
+		  logLen += size;
+		  t->loggingText[logLen] = 0;
+			
+			fsync(STDERR_FILENO);
+			fsync(STDOUT_FILENO);
+			dup2(t->_stderr, STDERR_FILENO);
+			dup2(t->_stdout, STDOUT_FILENO);
+			close(t->ttyMaster);
+			close(t->ttySlave);
+
 #endif
 #ifdef WINDOWS_COMPILE
 

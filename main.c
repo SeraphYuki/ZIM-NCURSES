@@ -216,10 +216,11 @@ int main(int argc, char **argv){
 
 	   }
 	}
-
-
 	X11_WithdrawWindow();
 	X11_Close();
+	wclear(stdscr);
+	wrefresh(stdscr);
+	endwin();
 	return 0;
 }
 #endif
