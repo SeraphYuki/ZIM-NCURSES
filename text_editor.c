@@ -1,10 +1,8 @@
-
 #include "thoth.h"
 #include "log.h"
 #include "file_browser.h"
 #include <stdio.h>
 #include <fcntl.h>
-#include <SDL3/SDL.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <ncurses.h>
@@ -1728,7 +1726,7 @@ static void IndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 		next = GetStartOfNextLine(t->file->text, t->file->textLen, next);
 	} while(next < sel->startCursorPos+sel->len);
 	
-
+	t->cursors[0].pos = next-1;
 	SaveCursors(t,c);
 }
 
@@ -1892,7 +1890,7 @@ static void ExpandSelectionLines(Thoth_Editor *t, Thoth_EditorCmd *c){
 	for(f = 0; f < t->nCursors; f++){
 
 		Thoth_EditorCur *cursor = &t->cursors[f];
-
+		cursor->pos++;
 		if(cursor->selection.len == 0){
 			cursor->selection.startCursorPos = cursor->pos - GetCharsIntoLine(t->file->text, cursor->pos);
 		}
@@ -1900,7 +1898,7 @@ static void ExpandSelectionLines(Thoth_Editor *t, Thoth_EditorCmd *c){
 		if(c->num < 0)
 			cursor->pos = GetStartOfPrevLine(t->file->text, cursor->pos);
 		else
-			cursor->pos = GetStartOfNextLine(t->file->text, t->file->textLen, cursor->pos);         
+			cursor->pos = GetStartOfNextLine(t->file->text, t->file->textLen, cursor->pos)-1;         
 
 		if(cursor->pos < 0) cursor->pos = 0;
 		if(cursor->pos > (int)t->file->textLen) cursor->pos = t->file->textLen;
@@ -3028,8 +3026,8 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	init_pair(THOTH_COLOR_STRING, COLOR_MAGENTA, COLOR_BLACK);
 
 	init_pair(THOTH_COLOR_SELECTED, COLOR_BLACK ,COLOR_CYAN);
-	init_pair(THOTH_COLOR_SELECTED_DIRECTORY, THOTH_COLOR_RED ,COLOR_CYAN);
-	init_pair(THOTH_COLOR_UNSELECTED_DIRECTORY, THOTH_COLOR_RED ,COLOR_WHITE);
+	init_pair(THOTH_COLOR_SELECTED_DIRECTORY, COLOR_RED ,COLOR_CYAN);
+	init_pair(THOTH_COLOR_UNSELECTED_DIRECTORY, COLOR_RED ,COLOR_WHITE);
 	init_pair(THOTH_COLOR_AUTO_COMPLETE, COLOR_BLACK, COLOR_WHITE);
 	init_pair(THOTH_COLOR_LOG_UNSELECTED, COLOR_BLACK, COLOR_WHITE);
 	init_pair(THOTH_COLOR_CURSOR, COLOR_BLACK ,COLOR_MAGENTA);
@@ -3721,6 +3719,10 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 
 				k += 2;
+				attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
+				Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+				x += 2;
+				ctOffset += 2;
 
 				if(comment == 1){
 					for (; k < renderTo; k++){
@@ -3731,24 +3733,26 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 				} else { /* comment */
 
 
-				for(;k < (renderTo-1) && !(text[k] == '*' && text[k+1] == '/'); k++){
-					if(text[k] == '\n'){
-						attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
-						Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
-						ctOffset = k;
-						x = 0;
-						y++;
-					}
-				}
-					if(k < renderTo-1){
-						k++; // will run to end of file otherwise. 
+					for(;k < (renderTo-1) && !(text[k] == '*' && text[k+1] == '/'); k++){
+						if(text[k] == '\n'){
+							attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
+							Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+							wclrtoeol(stdscr);
+							ctOffset = k+1;
+							x = 0;
+							y++;
+						}
 					}
 				}
 
-				if(k > 0 && text[k-1] == '*' && text[k] == '/') k++;
+/* comment 
+*/
+
+				if(k > 0 && text[k] == '*' && text[k+1] == '/') k+=2;
 
 				attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
 				Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+				wclrtoeol(stdscr);
 				x += k - ctOffset;
 				ctOffset = k;
 				comment = 0;

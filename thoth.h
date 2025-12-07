@@ -2,7 +2,6 @@
 #define THOTH_DEF 
 #include "text_editor.h"
 #include "config.h"
-#include <SDL3/SDL.h>
 
 typedef struct {
     int state;
@@ -17,7 +16,6 @@ typedef struct {
 
 void Thoth_LoadFile(Thoth_t *t, char *path);
 void Thoth_Destroy(Thoth_t *t);
-int Thoth_Event(Thoth_t *t, SDL_Event ev);
 Thoth_t *Thoth_Create(int w, int h);
 void Thoth_Render(Thoth_t *t);
 void Thoth_Resize(Thoth_t *t, int x, int y, int w, int h);
