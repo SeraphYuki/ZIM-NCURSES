@@ -89,7 +89,6 @@ void Event(Thoth_t *t){
 		int c = Xutf8LookupString(X11_GetIC(), &ev.xkey, buf, 15,&keysym, &status);
 		Xutf8LookupString(X11_GetIC(), &ev.xkey, buf, c,&keysym, &status);
 
-
 		if(strcmp(str, "Control_L") == 0) key |= THOTH_CTRL_KEY;
 		else if(strcmp(str, "Control_R") == 0) key |= THOTH_CTRL_KEY;
 		else if(strcmp(str, "Alt_L") == 0) key |= THOTH_ALT_KEY;
@@ -100,13 +99,17 @@ void Event(Thoth_t *t){
 		else if(strcmp(str, "Tab") == 0) key = 9;
 		else if(strcmp(str, "Escape") == 0) key = 27;
 		else if(strcmp(str, "BackSpace") == 0) key = 127;
+		else if(strcmp(str, "slash") == 0) key = (key&0xFF00)|'/';
+		else if(strcmp(str, "bracketleft") == 0) key = (key&0xFF00)|'[';
+		else if(strcmp(str, "bracketright") == 0) key = (key&0xFF00)|']';
 		else if(strcmp(str, "Right") == 0) key |= THOTH_ARROW_RIGHT;
 		else if(strcmp(str, "Left") == 0) key |= THOTH_ARROW_LEFT;
 		else if(strcmp(str, "Up") == 0) key |= THOTH_ARROW_UP;
 		else if(strcmp(str, "Down") == 0) key |= THOTH_ARROW_DOWN;
-		else
+		else if(strcmp(str, "") == 0) key |= THOTH_ARROW_DOWN;
+		else 
 			key = (key&0xFF00) | (str[0] & 0xFF);
-		
+
 		if((key & THOTH_CTRL_KEY) == 0 && key != 127 && key != 27 && key != 9) 
 			key = (key&0xFF00) | (buf[0] & 0xFF);
 

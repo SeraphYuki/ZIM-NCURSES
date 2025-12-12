@@ -39,8 +39,8 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->keybinds[THOTH_SwitchFile] = THOTH_CTRL_KEY|'p';
 	cfg->keybinds[THOTH_SaveAsFile] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'s';
 	cfg->keybinds[THOTH_SaveFile] = THOTH_CTRL_KEY|'s';
-	cfg->keybinds[THOTH_ToggleComment] = THOTH_ALT_KEY|'/';
-	cfg->keybinds[THOTH_ToggleCommentMulti] = THOTH_ALT_KEY|'.';
+	cfg->keybinds[THOTH_ToggleComment] = THOTH_CTRL_KEY|'/';
+	cfg->keybinds[THOTH_ToggleCommentMulti] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'/';
 	cfg->keybinds[THOTH_MoveBrackets] = THOTH_CTRL_KEY|'m';
 	cfg->keybinds[THOTH_SelectBrackets] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'j';
 	cfg->keybinds[THOTH_GotoLine] = THOTH_CTRL_KEY|'g';
@@ -56,10 +56,10 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->keybinds[THOTH_MoveByChars_FORWARD] = 	'l'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_MoveLines_UP] = 	'j'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_MoveLines_DOWN] = 	'k'|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_MoveByWords_BACK] = 'h'|THOTH_ALT_KEY|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_MoveByWords_FORWARD] = 'l'|THOTH_ALT_KEY|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_IndentLine_FORWARD] = ']'|THOTH_ALT_KEY;
-	cfg->keybinds[THOTH_IndentLine_BACK] = '['|THOTH_ALT_KEY;
+	cfg->keybinds[THOTH_MoveByWords_BACK] = 'h'|THOTH_CTRL_KEY|THOTH_CTRL_KEY;
+	cfg->keybinds[THOTH_MoveByWords_FORWARD] = 'l'|THOTH_CTRL_KEY|THOTH_CTRL_KEY;
+	cfg->keybinds[THOTH_IndentLine_FORWARD] = ']'|THOTH_CTRL_KEY;
+	cfg->keybinds[THOTH_IndentLine_BACK] = '['|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_ExpandSelectionWords_BACK] = THOTH_ARROW_LEFT|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD] = THOTH_ARROW_RIGHT|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_ScrollScreen_UP] = THOTH_ARROW_UP|THOTH_SHIFT_KEY;
@@ -97,20 +97,20 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_BLUE-1], (int[]){ THOTH_COLOR_BLUE ,THOTH_COLOR_BLACK }, sizeof(int)*2);
 	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_GREEN-1], (int[]){ THOTH_COLOR_GREEN ,THOTH_COLOR_BLACK }, sizeof(int)*2);
 	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_MAGENTA-1], (int[]){ THOTH_COLOR_MAGENTA ,THOTH_COLOR_BLACK }, sizeof(int)*2);
-	//gruvbox
-	// aurora
+//gruvbox
+//aurora
 
-	// {0xa1/255.0f,0xef/255.0f,0xe4/255.0f}, //cyan
-	// {0xff/255.0f,0x58/255.0f,0x74/255.0f}, //red
-	// {0xec/255.0f,0xc4/255.0f,0x8d/255.0f}, //yellow
-	// {0x82/255.0f,0xaa/255.0f,0xf0/255.0f}, //blue
-	// {0xad/255.0f,0xdb/255.0f,0x67/255.0f}, //green
-	// {0xbd/255.0f,0x93/255.0f,0xf3/255.0f}, //magenta
-	// {0xd6/255.0f,0xde/255.0f,0xeb/255.0f}, //white
-	//     {0x14/255.0f,0x14/255.0f,0x15/255.0f}, // black
-	//     {0x74/255.0f,0x74/255.0f,0x75/255.0f}, // grey
-	// {0x14/255.0f,0x14/255.0f,0x15/255.0f}, //bg
-	
+//{0xa1/255.0f,0xef/255.0f,0xe4/255.0f}, //cyan
+//{0xff/255.0f,0x58/255.0f,0x74/255.0f}, //red
+//{0xec/255.0f,0xc4/255.0f,0x8d/255.0f}, //yellow
+//{0x82/255.0f,0xaa/255.0f,0xf0/255.0f}, //blue
+//{0xad/255.0f,0xdb/255.0f,0x67/255.0f}, //green
+//{0xbd/255.0f,0x93/255.0f,0xf3/255.0f}, //magenta
+//{0xd6/255.0f,0xde/255.0f,0xeb/255.0f}, //white
+//{0x14/255.0f,0x14/255.0f,0x15/255.0f}, // black
+//{0x74/255.0f,0x74/255.0f,0x75/255.0f}, // grey
+//{0x14/255.0f,0x14/255.0f,0x15/255.0f}, //bg
+
 
 	FILE *fp = fopen(THOTH_CONFIG_FILE,"rb");
 

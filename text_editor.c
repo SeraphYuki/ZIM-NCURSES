@@ -1319,7 +1319,7 @@ static void AddCursorCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 			}
 			MoveCursorDownLine(t, cursor);
 
-			// t->cursors = (Thoth_EditorCur *)realloc(t->cursors, --t->nCursors * sizeof(Thoth_EditorCur));
+//			 t->cursors = (Thoth_EditorCur *)realloc(t->cursors, --t->nCursors * sizeof(Thoth_EditorCur));
 
 		}
 	}
@@ -1961,7 +1961,7 @@ static void ExpandSelectionLines(Thoth_Editor *t, Thoth_EditorCmd *c){
 		if(c->num < 0)
 			cursor->pos = GetStartOfPrevLine(t->file->text, cursor->pos);
 		else
-			cursor->pos = GetStartOfNextLine(t->file->text, t->file->textLen, cursor->pos)-1;         
+			cursor->pos = GetStartOfNextLine(t->file->text, t->file->textLen, cursor->pos)-1;
 
 		if(cursor->pos < 0) cursor->pos = 0;
 		if(cursor->pos > (int)t->file->textLen) cursor->pos = t->file->textLen;
