@@ -3058,10 +3058,21 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 	//not enough checking. but itll save it from opening images on accident and crashing.
 
 	t->file->text = (char *)malloc(len + 1);
-	fread(t->file->text, sizeof(char), len, fp);
+	fread(t->file->text, sizeof(unsigned char), len, fp);
 	t->file->text[len] = '\0';
+	int k;
+	for(k = 0; k < len-1; k++){
+		if(t->file->text[k] == '\r'){
+			for( m = k; m < len-1; m++){
+				t->file->text[m] = t->file->text[m+1]; 
+			}
+			k--; 
+			len--;
+		}
+	}
+	t->file->text[len] = 0;
 
-	t->file->textLen = strlen(t->file->text);
+	t->file->textLen = len;
 	fclose(fp);
 
 endfile:
@@ -3732,7 +3743,6 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 			}
 
 			addedStr:
-			if(c =='\r') continue;
 
 			if(c =='\n'){
 		
@@ -3781,7 +3791,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 			}
 			
 
-			// if(!comment && !string) k++;
+			// if(!comment && !string) k++; 
 
 			if(comment){
 
@@ -3793,7 +3803,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 				if(comment == 1){
 					for (; k < renderTo; k++){
-						if(text[k] == '\n'){  break; }
+						if(text[k] == '\n'){ break; }
 					}
 
 
@@ -3810,13 +3820,13 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 							y++;
 						}
 					}
+					if( text[k] == '*' && text[k+1] == '/') k+=2;
 				}
-
-				if( text[k] == '*' && text[k+1] == '/') k+=2;
 
 				attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
 				x += Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
 				if(text[k] == '\n'){
+					move(t->logY+y,t->logX+x);
 					wclrtoeol(stdscr);
 					y++;
 					x = 0;
