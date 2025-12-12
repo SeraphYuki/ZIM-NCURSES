@@ -15,6 +15,7 @@ enum {
 	THOTH_SaveAsFile,
 	THOTH_SaveFile,
 	THOTH_ToggleComment,
+	THOTH_ToggleCommentMulti,
 	THOTH_MoveBrackets,
 	THOTH_SelectBrackets,
 	THOTH_GotoLine,

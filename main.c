@@ -7,9 +7,9 @@
 #include <ncurses.h>
 #include "text_editor.h"
 #include "memory.h"
-#include "x11.h"
 #include "config.h"
 #include "thoth.h"
+#include "x11.h"
 
 enum {
 	THOTH_STATE_QUIT = 1,
@@ -128,7 +128,6 @@ void Event(Thoth_t *t){
 		else if(strcmp(str, "Up") == 0) t->key ^= THOTH_ARROW_UP;
 		else if(strcmp(str, "Down") == 0) t->key ^= THOTH_ARROW_DOWN;
 	}
-
 //#ifndef LIBRARY_COMPILE
 //	} else if(ev.type == SDL_EVENT_WINDOW_RESIZED || ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED){
 //		Thoth_Graphics_ViewportXY(&t->graphics, 0, 0);

@@ -145,7 +145,8 @@ typedef struct {
   int                     ttySlave;
   int                     _stdout;
   int                     _stderr;
- };
+	char 				*clipboard; 
+};
 
 
 void Thoth_Editor_LoadFile(Thoth_Editor *t, char *path);

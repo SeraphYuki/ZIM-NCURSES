@@ -40,6 +40,7 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->keybinds[THOTH_SaveAsFile] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'s';
 	cfg->keybinds[THOTH_SaveFile] = THOTH_CTRL_KEY|'s';
 	cfg->keybinds[THOTH_ToggleComment] = THOTH_ALT_KEY|'/';
+	cfg->keybinds[THOTH_ToggleCommentMulti] = THOTH_ALT_KEY|'.';
 	cfg->keybinds[THOTH_MoveBrackets] = THOTH_CTRL_KEY|'m';
 	cfg->keybinds[THOTH_SelectBrackets] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'j';
 	cfg->keybinds[THOTH_GotoLine] = THOTH_CTRL_KEY|'g';

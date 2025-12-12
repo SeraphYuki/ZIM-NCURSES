@@ -11,6 +11,7 @@
 
 void X11_WithdrawWindow();
 XIC X11_GetIC();
+Display *X11_GetDisplay();
 void X11_Init();
 void X11_NextEvent(XEvent *ev);
 void X11_Close();

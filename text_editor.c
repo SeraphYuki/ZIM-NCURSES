@@ -28,6 +28,8 @@ enum {
   SCR_CENT,
 };
 
+static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c);
+static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void PutsCursor(Thoth_EditorCur c);
 static void LoggingMoveLines(Thoth_Editor *t, int num);
 static void LoggingRemoveCharacter(Thoth_Editor *t);
@@ -1438,7 +1440,7 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	// RefreshEditorCommand(c);
 
-	char *clipboard = (char*)getenv("CLIPBOARD");
+	char *clipboard = t->clipboard;
 	if(c->keys && strlen(c->keys)){
 		clipboard = c->keys;
 	} else {
@@ -1755,6 +1757,65 @@ static void UndoIndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	SaveCursors(t, c);
 }
+static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c){
+
+	if(!t->file->text) return;
+	
+	t->file->textLen = strlen(t->file->text);
+	
+	LoadCursors(t,c);
+	if(t->cursors[0].selection.len == 0) return;
+
+	int startSelection = t->cursors[0].selection.startCursorPos - 
+			GetCharsIntoLine(t->file->text, t->cursors[0].selection.startCursorPos);
+
+	if(t->file->text[startSelection] == '\n')
+		startSelection++;
+
+	int endSelection = GetStartOfNextLine(t->file->text, t->file->textLen, 
+				t->cursors[0].selection.startCursorPos+t->cursors[0].selection.len)-1;
+
+	t->cursors[0].selection.len = endSelection - startSelection;
+	t->cursors[0].selection.startCursorPos = startSelection;
+
+	int k = 0;
+	int m;
+	for(m = startSelection; m < endSelection; m++){
+		
+		while((t->file->text[m] == '\t' || t->file->text[m] == ' ')
+		 && m < endSelection) m++;
+
+		if(t->file->text[m] == '\n') continue;
+
+		if(strncmp(&t->file->text[m], "/*", 2) == 0) {
+			t->cursors[0].pos = m+2;
+			RemoveStrFromText(t, &k, 2);
+			endSelection -= 2;
+			break;
+		} else {
+			t->cursors[0].pos = m;
+			AddStrToText(t, &k, "/*");
+			endSelection+=2;
+			m += 2;
+			break;
+		}
+	}
+	t->cursors[0].pos =endSelection;
+	if(strncmp(&t->file->text[endSelection-2], "*/", 2) == 0) {
+		RemoveStrFromText(t, &k, 2);
+		endSelection -= 2;
+	} else {
+		AddStrToText(t, &k, "*/");
+		endSelection+=2;
+		m += 2;
+	}
+	t->cursors[0].selection.len = endSelection - startSelection;
+	t->cursors[0].selection.startCursorPos = startSelection;
+
+	SaveCursors(t,c);
+
+
+}
 
 static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c){
 
@@ -1772,7 +1833,7 @@ static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c){
 			int lineEnd = GetStartOfNextLine(t->file->text, t->file->textLen, t->cursors[k].pos)-1;
 			int lineStart = t->cursors[k].pos - 
 			GetCharsIntoLine(t->file->text, t->cursors[k].pos);
-			if(t->file->text[lineStart] =='\n') lineStart++;
+			if(t->file->text[lineStart] =='\n') lineStart++;;
 
 			int j;
 			int toggled = 0;
@@ -1810,6 +1871,8 @@ static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c){
 			
 			while((t->file->text[m] == '\t' || t->file->text[m] == ' ')
 			 && m < endSelection) m++;
+
+			if(t->file->text[m] == '\n') continue;
 
 			if(strncmp(&t->file->text[m], "//", 2) == 0) {
 				t->cursors[k].pos = m+2;
@@ -2018,15 +2081,21 @@ static void Copy(Thoth_Editor *t, Thoth_EditorCmd *c){
 			memcpy(buffer, &t->file->text[start], end-start);
 		}
 
-		// if(t->cursors[k].clipboard) free(t->cursors[k].clipboard);
+		 //if(t->cursors[k].clipboard) free(t->cursors[k].clipboard);
 
-		// t->cursors[k].clipboard = (char *)malloc((end-start) + 1);
-		// t->cursors[k].clipboard[end-start] = 0;
+		 //t->cursors[k].clipboard = (char *)malloc((end-start) + 1);
+		 //t->cursors[k].clipboard[end-start] = 0;
 
-		// memcpy(t->cursors[k].clipboard, &t->file->text[start], end-start);
+		 //memcpy(t->cursors[k].clipboard, &t->file->text[start], end-start);
 	}
-	if(buffer)
-		setenv("CLIPBOARD",buffer,1);
+	if(buffer){
+		if(t->clipboard) free(t->clipboard);
+		bufferLen++;
+		buffer = realloc(buffer, bufferLen+1);
+		buffer[bufferLen-1] = '\n';
+		buffer[bufferLen] = 0;
+		t->clipboard = buffer;
+	}
 }
 
 static void Cut(Thoth_Editor *t, Thoth_EditorCmd *c){
@@ -3046,6 +3115,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	wclear(stdscr);
 	timeout(50);
 
+
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_UP] , 0}, "", -1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_DOWN] , 0}, "", 1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
 
@@ -3059,7 +3129,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SaveFile]  , 0}, "", 0, SCR_NORM, SaveFile, NULL));
 
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ToggleComment]  , 0}, "", 0, SCR_NORM, ToggleComment, ToggleComment));
-	// AddCommand(t, CreateCommand((unsigned int[]){THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'/'  , 0}, "", 0, ToggleComment, ToggleComment));
+	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ToggleCommentMulti]  , 0}, "", 0, SCR_NORM, ToggleCommentMulti, ToggleCommentMulti));
 
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveBrackets] , 0}, "", 0, SCR_NORM, MoveBrackets, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SelectBrackets]  , 0}, "", 0, SCR_NORM, SelectBrackets, NULL));
@@ -3286,12 +3356,19 @@ void Thoth_Editor_SetCursorPos(Thoth_Editor *t, int x, int y){
 	t->mouseSelection = t->cursors[0].pos;
 	t->cursors[0].selection.len = 0;
 }
-void Thoth_mvprintw(int x, int y, char *str, int len){
-	char *buffer = (char*)malloc(len+1);
-	memset(buffer,0,len+1);
-	memcpy(buffer, str, len);
+int Thoth_mvprintw(int x, int y, char *str, int len){
+	int tabtospace = 0, k, m = 0;
+	for(k = 0; k < len; k++) if(str[k] == '\t') tabtospace++;
+	char *buffer = (char*)malloc(len+1+(tabtospace*3));
+	memset(buffer,0,len+1+(tabtospace*3));
+	for(k = 0; k < len; k++){
+		if(str[k] == '\t') { sprintf(&buffer[m],"    "); m+= 4; continue;}
+		buffer[m] = str[k];
+		m++;
+	}
 	mvprintw(y,x,"%s",buffer);
 	free(buffer);
+	return tabtospace;
 }
 void Thoth_Editor_Draw(Thoth_Editor *t){
 
@@ -3722,7 +3799,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 				attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
 				Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
 				x += 2;
-				ctOffset += 2;
+				ctOffset = k;
 
 				if(comment == 1){
 					for (; k < renderTo; k++){
@@ -3736,7 +3813,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					for(;k < (renderTo-1) && !(text[k] == '*' && text[k+1] == '/'); k++){
 						if(text[k] == '\n'){
 							attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
-							Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+							Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset );
 							wclrtoeol(stdscr);
 							ctOffset = k+1;
 							x = 0;
@@ -3745,15 +3822,17 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					}
 				}
 
-/* comment 
-*/
-
-				if(k > 0 && text[k] == '*' && text[k+1] == '/') k+=2;
+				if( text[k] == '*' && text[k+1] == '/') k+=2;
 
 				attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
-				Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
-				wclrtoeol(stdscr);
-				x += k - ctOffset;
+				int tabs = Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+				x += (k - ctOffset) + (tabs * 3);
+				if(text[k] == '\n'){
+					wclrtoeol(stdscr);
+					y++;
+					x = 0;
+					k++;
+				}
 				ctOffset = k;
 				comment = 0;
 				continue;
@@ -4209,6 +4288,7 @@ int Thoth_Editor_Destroy(Thoth_Editor *t){
 	for(k = 0; k < t->nCommands; k++)
 		FreeCommand(t->commands[k]);
 
+	if(t->clipboard) free(t->clipboard);
 	FreeCursors(t);
 	Thoth_FileBrowser_Free(&t->fileBrowser);
 	return 1;
