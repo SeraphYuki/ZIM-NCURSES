@@ -3368,7 +3368,7 @@ int Thoth_mvprintw(int x, int y, char *str, int len){
 	}
 	mvprintw(y,x,"%s",buffer);
 	free(buffer);
-	return tabtospace;
+	return tabtospace*3 + len;
 }
 void Thoth_Editor_Draw(Thoth_Editor *t){
 
@@ -3694,8 +3694,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 				if((k - ctOffset) == 1 && IsDigit(text[k-1])){
 					attron(COLOR_PAIR(THOTH_COLOR_NUM));
-					Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], 1);
-					x++;
+					x += Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], 1);
 					ctOffset = k;
 					goto addedStr;
 				}
@@ -3705,9 +3704,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 						memcmp(&text[ctOffset], keywords[m], (k - ctOffset)) == 0) {
 						
 						attron(COLOR_PAIR(THOTH_COLOR_KEYWORD));
-						Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+						x += Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
 
-						x += k - ctOffset;
 						ctOffset = k;
 						goto addedStr;
 
@@ -3719,19 +3717,16 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					// so that we can change colors at the token after the def
 
 					attron(COLOR_PAIR(THOTH_COLOR_FUNCTION));
-					Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset); 
-					x += k - ctOffset;
+					x += Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset); 
 					attron(COLOR_PAIR(THOTH_COLOR_FUNCTION));
-					Thoth_mvprintw(t->logX+x, t->logY+y, &text[k], 1);
-					x++;
+					x += Thoth_mvprintw(t->logX+x, t->logY+y, &text[k], 1);
 					k++;
 					ctOffset = k;
 					continue;
 				}
 
 				attron(COLOR_PAIR(THOTH_COLOR_NORMAL));
-				Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
-				x += k - ctOffset;
+				x += Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
 
 				ctOffset = k;
 			}
@@ -3751,9 +3746,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 			if(c =='\t'){
 				attroff(COLOR_PAIR(THOTH_COLOR_NORMAL));
-				char *buf = "    ";
-				Thoth_mvprintw(t->logX+x, t->logY+y, buf, 4);
-				x += 4;
+				char *buf = "\t";
+				x += Thoth_mvprintw(t->logX+x, t->logY+y, buf, 1);
 				ctOffset = ++k;
 				continue;
 			}
@@ -3761,8 +3755,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 			if(c ==' '){
 				attroff(COLOR_PAIR(THOTH_COLOR_NORMAL));
 				char *buf = " ";
-				Thoth_mvprintw(t->logX+x, t->logY+y, buf, 1);
-				x++;
+				x += Thoth_mvprintw(t->logX+x, t->logY+y, buf, 1);
 				ctOffset = ++k;
 				continue;
 			}
@@ -3775,16 +3768,14 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 			if(c == ')' || c == '('){
 				attron(COLOR_PAIR(THOTH_COLOR_FUNCTION));
-				Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], 1);
-				x++;
+				x += Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], 1);
 				ctOffset = ++k;
 				continue;
 			}
 			
 			if(c != ' ' && c != '(' && c != ')' && token && !comment && !string){
 				attron(COLOR_PAIR(THOTH_COLOR_TOKEN));
-				Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], 1);
-				x++;
+				x += Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], 1);
 				ctOffset = ++k;
 				continue;
 			}
@@ -3797,8 +3788,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 				k += 2;
 				attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
-				Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
-				x += 2;
+				x += Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
 				ctOffset = k;
 
 				if(comment == 1){
@@ -3825,8 +3815,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 				if( text[k] == '*' && text[k+1] == '/') k+=2;
 
 				attron(COLOR_PAIR(THOTH_COLOR_COMMENT));
-				int tabs = Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
-				x += (k - ctOffset) + (tabs * 3);
+				x += Thoth_mvprintw(t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
 				if(text[k] == '\n'){
 					wclrtoeol(stdscr);
 					y++;
@@ -3869,9 +3858,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 				if(k >= renderTo-1) k--;
 
 				attron(COLOR_PAIR(THOTH_COLOR_STRING));
-				Thoth_mvprintw(t->logX+x, t->logY+y,&text[ctOffset], k - ctOffset);
+				x += Thoth_mvprintw(t->logX+x, t->logY+y,&text[ctOffset], k - ctOffset);
 								
-				x += k - ctOffset;
 				ctOffset = k;
 				string = 0;
 
