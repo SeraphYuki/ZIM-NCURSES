@@ -75,7 +75,7 @@ void Event(Thoth_t *t){
 //	}
 #endif
 	XEvent ev;
-	X11_NextEvent(&ev);
+	X11_NextEvent(&ev,t->te.clipboard);
 
 	
 	if(ev.type == KeyPress){

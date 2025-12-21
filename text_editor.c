@@ -1,5 +1,6 @@
 #include "thoth.h"
 #include "log.h"
+#include "x11.h"
 #include "file_browser.h"
 #include <stdio.h>
 #include <fcntl.h>
@@ -1435,11 +1436,12 @@ static void SelectNextWord(Thoth_Editor *t, Thoth_EditorCmd *c){
 // }
 
 static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
-
 	LoadCursors(t, c);
 
 	// RefreshEditorCommand(c);
 
+	X11_Paste(&t->clipboard);
+	
 	char *clipboard = t->clipboard;
 	if(c->keys && strlen(c->keys)){
 		clipboard = c->keys;
@@ -2095,6 +2097,7 @@ static void Copy(Thoth_Editor *t, Thoth_EditorCmd *c){
 		buffer[bufferLen-1] = '\n';
 		buffer[bufferLen] = 0;
 		t->clipboard = buffer;
+		X11_Copy(&t->clipboard);
 	}
 }
 
@@ -3434,8 +3437,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					"ctrl+h (move left) ctrl+l (move right) ctrl+j (move up) ctrl+k (move down)\n"
 					"shift+arrow up/down (scroll screen up/down)\n"
 					"ctrl+alt+arrow right/left (expand selection by words right/left)\n"
-					"alt+[ (indent backward)\n"
-					"alt+] (indent forward)\n"
+					"ctrl+[ (indent backward)\n"
+					"ctrl+] (indent forward)\n"
 					"ctrl+alt+h (move by words left) ctrl+alt+l (move by words right)\n"
 					"ctrl+shift+l (expand selection by a line)\n"
 					"ctrl+shift+k (delete line)\n"
@@ -3447,7 +3450,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					"ctrl+F (case senstive search)\n"
 					"ctrl+m (move brackets) (moves cursor between the { }, ( ), [ ], of the current scope) (either to the end, or to the beginning if its at the end)\n"
 					"ctrl+shift+j (select brackets) (selects everything between the brackets)\n"
-					"alt+/ (toggle comment) (adds or removes // for the line to comment) (todo: mutli-line)\n"
+					"ctrl+/ (toggle comment)\n"
+					"ctrl+shift+/ (toggle multi comment)\n"
 					"ctrl+shift+arrow up/down (move line up/down) (moves the entire line the cursors on, or every line in the selection by a line)\n"
 					"ctrl+o (open file)\n"
 					"ctrl+shift+o (file browser)\n"
@@ -3585,9 +3589,6 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 								if(ansi >= 7) ansi = 7;
 								attron(COLOR_PAIR(THOTH_TE_COLOR_BLACK + ansi));
 							} 
-							// if(params[m] == 01){
-							//     attron(COLOR_PAIR(BOLD));
-							// }
 						}
 
 						if(nParams == 0){
@@ -4067,7 +4068,7 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 			t->quit = 1;
 			return;
 		}
-		if(key == ((( unsigned int)'b') | THOTH_ALT_KEY)){
+		if(key == ((( unsigned int)'b') | THOTH_CTRL_KEY)){
 	
 			if(strlen(t->file->path) > 0){
 				FILE *fp = fopen(t->file->path, "wb");

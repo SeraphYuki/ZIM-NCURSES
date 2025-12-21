@@ -56,8 +56,8 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->keybinds[THOTH_MoveByChars_FORWARD] = 	'l'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_MoveLines_UP] = 	'j'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_MoveLines_DOWN] = 	'k'|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_MoveByWords_BACK] = 'h'|THOTH_CTRL_KEY|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_MoveByWords_FORWARD] = 'l'|THOTH_CTRL_KEY|THOTH_CTRL_KEY;
+	cfg->keybinds[THOTH_MoveByWords_BACK] = 'h'|THOTH_ALT_KEY|THOTH_CTRL_KEY;
+	cfg->keybinds[THOTH_MoveByWords_FORWARD] = 'l'|THOTH_ALT_KEY|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_IndentLine_FORWARD] = ']'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_IndentLine_BACK] = '['|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_ExpandSelectionWords_BACK] = THOTH_ARROW_LEFT|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;

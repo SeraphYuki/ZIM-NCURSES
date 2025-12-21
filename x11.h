@@ -13,8 +13,11 @@ void X11_WithdrawWindow();
 XIC X11_GetIC();
 Display *X11_GetDisplay();
 void X11_Init();
-void X11_NextEvent(XEvent *ev);
+void X11_NextEvent(XEvent *ev, char *clipboard);
 void X11_Close();
 int X11_GetGlobalKeys(int *ret);
+void X11_Copy(char **str);
+void X11_Paste(char **str);
+
 
 #endif
