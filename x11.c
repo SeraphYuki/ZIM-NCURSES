@@ -36,24 +36,24 @@ void X11_Init(){
     XWindowAttributes attr;
     XGetWindowAttributes(display, window, &attr);
 
-     int width = 0, height = 0;
-
-     while(1){
-         Window p_window;
-         XQueryTree(display, window, &root, &parent, &children, &nchildren);
-         p_window = window;
-         int i;
-         for(i = 0; i < nchildren; i++){
-             XGetWindowAttributes(display, children[i], &attr);
-             if(attr.width > width && attr.height > height){
-                 width = attr.width;
-                 height = attr.height;
-                 window = children[i];
-             }
-         }
-
-         if(p_window == window) break;
-     }
+	int width = 0, height = 0;
+	
+	while(1){
+		Window p_window;
+		XQueryTree(display, window, &root, &parent, &children, &nchildren);
+		p_window = window;
+		int i;
+		for(i = 0; i < nchildren; i++){
+			XGetWindowAttributes(display, children[i], &attr);
+			if(attr.width > width && attr.height > height){
+				width = attr.width;
+				height = attr.height;
+				window = children[i];
+			}
+		}
+	
+		if(p_window == window) break;
+	}
 
      if(width == 1 && height == 1)
          window = parent;
@@ -70,8 +70,6 @@ void X11_Init(){
 	attr.border_width, attr.depth, attr.class, 
         attr.visual, windowMask, &winAttrib );
 
-	XSelectInput(display,clipboardWindow,SelectionNotify);
-
 //    gc = XCreateGC(display, ourWindow, 0, NULL);
 
     xim = XOpenIM(display,NULL,NULL,NULL);
@@ -79,7 +77,7 @@ void X11_Init(){
         XNClientWindow, window, NULL);
 
 	XSelectInput(display, parent,  FocusChangeMask);
-    XSelectInput(display, window, KeyPress | KeyRelease | FocusChangeMask);
+    XSelectInput(display, window, KeyPress | KeyRelease);
 	XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
 
 

@@ -2,6 +2,7 @@
 #define CONFIG_DEF
 
 #include "types.h"
+#define DEFAULT_TAB_WIDTH 4
 
 enum {
 	THOTH_MoveLinesText_UP= 1,
@@ -102,6 +103,7 @@ typedef struct {
 	int colorPairs[THOTH_TE_NUM_COLOR_PAIRS][2];
 	unsigned int keybinds[THOTH_NUM_KEYBINDS];
 	char makecmd[32];
+	int tabs;
 } Thoth_Config;
 
 void Thoth_Config_Read(Thoth_Config *cfg);

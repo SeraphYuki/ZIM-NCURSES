@@ -457,8 +457,25 @@ static void EventEnter(Thoth_Editor *t, int key){
 	}
 
 	Thoth_EditorCmd *command;
-
-	command = CreateCommand((const unsigned int[]){0}, (const char[]){'\n', 0}, 0, SCR_CENT, AddCharacters, UndoAddCharacters);
+	if(t->nCursors == 1){
+		int into = t->cursors[0].pos - GetCharsIntoLine(t->file->text, t->cursors[0].pos);
+		int tabs = 0;
+		int k;
+		for(k = into; k < t->cursors[0].pos; k++, tabs++){
+			if(t->file->text[k] != '\t') break;
+		}
+		char *buffer = malloc(tabs + 2);
+		buffer[0] = '\n';
+		for(k = 1; k < tabs+1; k++) buffer[k] = '\t';
+		buffer[k] = 0;
+		command = CreateCommand((const unsigned int[]){0}, buffer, 0, 
+			SCR_CENT, AddCharacters, UndoAddCharacters);
+	} else {
+		command = CreateCommand((const unsigned int[]){0}, "\n", 0, 
+			SCR_CENT, AddCharacters, UndoAddCharacters);
+		command = CreateCommand((const unsigned int[]){0}, (const char[]){'\n', 0}, 0, 
+			SCR_CENT, AddCharacters, UndoAddCharacters);
+	}
 	ExecuteCommand(t,command);
 	FreeCommand(command);
 }
@@ -546,6 +563,7 @@ static void ResolveCursorCollisions(Thoth_Editor *t, int *cursorIndex){
 
 						t->cursors[f].addedLen += t->cursors[j].addedLen;
 					}
+					t->cursors[f].selection.len += t->cursors[j].selection.len;
 
 					int m;
 					for(m = j; m < t->nCursors-1; m++){
@@ -1652,14 +1670,14 @@ static void IndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 */
 	LoadCursors(t,c);
-	RemoveExtraCursors(t);
+//	RemoveExtraCursors(t);
 
 	if(c->hiddenCursors){
 		RemoveSelections(t);
 		int k;
 		for(k = 0; k < c->nHiddenCursors; k++){
-			int index = 0;
-			t->cursors[0].pos = c->hiddenCursors[k].pos;
+			int index = c->hiddenCursors[k].hiddenIndex;
+			t->cursors[index].pos = c->hiddenCursors[k].pos;
 
 			if(c->hiddenCursors[k].addedLen){
 				AddStrToText(t, &index, "\t");
@@ -1676,61 +1694,70 @@ static void IndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 		return;
 	}
 
-	Thoth_EditorSelection *sel = &t->cursors[0].selection;
-	
-	if(!sel->len){
-		sel->startCursorPos = t->cursors[0].pos - 
-				GetCharsIntoLine(t->file->text, t->cursors[0].pos);
+	int k;
+	for(k = 0; k < t->nCursors; k++){
 
-		if(t->file->text[sel->startCursorPos] == '\n')
-			sel->startCursorPos++;
+		Thoth_EditorSelection *sel = &t->cursors[k].selection;
+		
+		if(!sel->len){
+			sel->startCursorPos = t->cursors[k].pos - 
+					GetCharsIntoLine(t->file->text, t->cursors[k].pos);
 
-		sel->len =
-				GetStartOfNextLine(t->file->text, t->file->textLen, 
-					sel->startCursorPos) - sel->startCursorPos;
-	}
+					if(t->file->text[sel->startCursorPos] == '\n')
+				sel->startCursorPos++;
 
-	int startCursorPos=sel->startCursorPos;
-	int next = startCursorPos;
-	next = startCursorPos - GetCharsIntoLine(t->file->text, next);
-	if(t->file->text[next] == '\n') next++;
-
-	if(next < startCursorPos){
-		sel->startCursorPos = next;
-		sel->len += startCursorPos - next;
-	}
- do {
-
-		t->cursors[0].pos = next;
-
-		if(c->num > 0){
-			c->hiddenCursors = (Thoth_EditorCur *)realloc(c->hiddenCursors, sizeof(Thoth_EditorCur) * ++c->nHiddenCursors);
-			Thoth_EditorCur *cur = &c->hiddenCursors[c->nHiddenCursors-1];
-			memset(cur, 0, sizeof(Thoth_EditorCur));
-			t->cursors[0].pos = next;
-			cur->addedLen = 1;
-			int index = 0;
-			AddStrToText(t, &index, "\t");
-			cur->pos = t->cursors[0].pos;
-			sel->len++;
-		} else {
-			if (t->file->text[t->cursors[0].pos] == '\t' || t->file->text[t->cursors[0].pos] == ' '){
-				c->hiddenCursors = (Thoth_EditorCur *)realloc(c->hiddenCursors, sizeof(Thoth_EditorCur) * ++c->nHiddenCursors);
-				Thoth_EditorCur *cur = &c->hiddenCursors[c->nHiddenCursors-1];
-				memset(cur, 0, sizeof(Thoth_EditorCur));
-				cur->pos = next;
-				t->cursors[0].pos = next+1;
-				cur->savedText = malloc(2);
-				cur->savedText[0] = '\t';
-				cur->savedText[1] = 0;
-				int index = 0;
-				RemoveStrFromText(t, &index, 1);
-			} 
+					sel->len =
+					GetStartOfNextLine(t->file->text, t->file->textLen, 
+						sel->startCursorPos) - sel->startCursorPos;
 		}
-		next = GetStartOfNextLine(t->file->text, t->file->textLen, next);
-	} while(next < sel->startCursorPos+sel->len);
-	
-	t->cursors[0].pos = next-1;
+
+		int startCursorPos=sel->startCursorPos;
+		int next = startCursorPos;
+		next = startCursorPos - GetCharsIntoLine(t->file->text, next);
+		
+		if(next < startCursorPos){
+			sel->startCursorPos = next;
+			sel->len += startCursorPos - next;
+		}
+		ResolveCursorCollisions(t,&k);		
+	}
+	for(k = 0; k < t->nCursors; k++){
+		Thoth_EditorSelection *sel = &t->cursors[k].selection;
+		int next = sel->startCursorPos;
+		if(t->file->text[next] == '\n') next++;
+		do {
+			t->cursors[k].pos = next;
+		
+			if(c->num > 0){
+				c->hiddenCursors = (Thoth_EditorCur *)realloc(c->hiddenCursors, sizeof(Thoth_EditorCur) * ++c->nHiddenCursors);
+				Thoth_EditorCur *cur = &c->hiddenCursors[c->nHiddenCursors-1];			
+				memset(cur, 0, sizeof(Thoth_EditorCur));
+				t->cursors[k].pos = next;
+				cur->addedLen = 1;
+				AddStrToText(t, &k, "\t");
+				cur->pos = t->cursors[k].pos;
+				sel->len++;
+			} else {
+				
+				if (t->file->text[next] == '\t' || t->file->text[next] == ' '){
+					c->hiddenCursors = (Thoth_EditorCur *)realloc(c->hiddenCursors, sizeof(Thoth_EditorCur) * ++c->nHiddenCursors);
+					Thoth_EditorCur *cur = &c->hiddenCursors[c->nHiddenCursors-1];
+					memset(cur, 0, sizeof(Thoth_EditorCur));
+					cur->pos = next+1;
+					t->cursors[k].pos= next+1;
+					cur->savedText = malloc(2);
+					cur->savedText[0] = '\t';
+					cur->savedText[1] = 0;
+					Thoth_EditorSelection backup = *sel;
+					RemoveStrFromText(t, &k, 1);
+					*sel = backup;
+					sel->len--;
+					}
+				}
+				next = GetStartOfNextLine(t->file->text, t->file->textLen, next);
+			} while(next < sel->startCursorPos+sel->len);
+			t->cursors[k].pos = next-1;
+	}
 	SaveCursors(t,c);
 }
 
@@ -1741,8 +1768,8 @@ static void UndoIndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 	RemoveSelections(t);
 	int k;
 	for(k = 0; k < c->nHiddenCursors; k++){
-		int index = 0;
-		t->cursors[0].pos = c->hiddenCursors[k].pos;
+		int index = c->hiddenCursors[k].hiddenIndex;
+		t->cursors[index].pos = c->hiddenCursors[k].pos;
 
 		if(c->hiddenCursors[k].addedLen){
 			RemoveStrFromText(t, &index, c->hiddenCursors[k].addedLen);
@@ -2020,23 +2047,24 @@ static void DeleteLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	LoadCursors(t,c);
 	// RefreshEditorCommand(c);
-	RemoveExtraCursors(t);
+//	RemoveExtraCursors(t);
 	RemoveSelections(t);
 
-
-	Thoth_EditorCur *cursor = &t->cursors[0];
-
-	int start;
-	int end;
-
-	start = cursor->pos - GetCharsIntoLine(t->file->text, cursor->pos);
-	end = GetStartOfNextLine(t->file->text,t->file->textLen, cursor->pos);
-
 	int k = 0;
-	cursor->pos = end;
-	AddSavedText(t, &t->file->text[start], end-start, &k);
-	RemoveStrFromText(t, &k, end-start);
-
+	for(k = 0; k < t->nCursors; k++){
+	
+		Thoth_EditorCur *cursor = &t->cursors[k];
+	
+		int start;
+		int end;
+	
+		start = cursor->pos - GetCharsIntoLine(t->file->text, cursor->pos);
+		end = GetStartOfNextLine(t->file->text,t->file->textLen, cursor->pos);
+	
+		cursor->pos = end;
+		AddSavedText(t, &t->file->text[start], end-start, &k);
+		RemoveStrFromText(t, &k, end-start);
+	}
 	SaveCursors(t,c);
 }
 
@@ -3072,6 +3100,25 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 			k--; 
 			len--;
 		}
+
+	}
+	for(k = 0; k < len-1; k++){
+		if(t->file->text[k] == '\n' || k == 0){
+			k++;
+			for( m = k; m < len-1 && m-k < t->cfg->tabs; m++){
+				if(t->file->text[m] != ' ') break;
+			}
+			if(m-k == t->cfg->tabs){
+				int x;
+				for(x = 0; x < t->cfg->tabs-1; x++){
+					for( m = k; m < len-1; m++){
+						t->file->text[m] = t->file->text[m+1];
+					}
+					len--;
+				}
+				t->file->text[k] = '\t'; 
+			}
+		}
 	}
 	t->file->text[len] = 0;
 
@@ -3464,11 +3511,14 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 			int last = 0;
 			for(k = 0; k < strlen(help); k++){
 				if(help[k] == '\n'){
+						char *tab = "    ";
+						attron(COLOR_PAIR(THOTH_COLOR_NORMAL));
+						Thoth_mvprintw(0, t->logY, tab, strlen(tab));
 
-						Thoth_mvprintw(t->logX, t->logY, &help[last], k-last);
+						Thoth_mvprintw(4, t->logY, &help[last], k-last);
 						wclrtoeol(stdscr);
 
-						last = k;
+						last = k+1;
 						t->logY++;
 				}
 			}
@@ -4292,3 +4342,8 @@ int Thoth_Editor_Destroy(Thoth_Editor *t){
 	Thoth_FileBrowser_Free(&t->fileBrowser);
 	return 1;
 }
+
+
+
+
+

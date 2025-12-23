@@ -79,6 +79,7 @@
   Thoth_EditorSelection selection;
 
   //no longer used, now clipboard is from system, lines seperated by \n
+	int hiddenIndex;
   char *clipboard;
   int sClipboard;
   char *savedText;

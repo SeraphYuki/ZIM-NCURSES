@@ -4,14 +4,14 @@
 #include "config.h"
 
 typedef struct {
-    int state;
-    u32 key;
-    Thoth_Editor te;
-    Thoth_Config cfg;
-    int mousedown;
-    int mousex;
-    int mousey;
-    int mousemotiontime;
+	int state;
+	u32 key;
+	Thoth_Editor te;
+	Thoth_Config cfg;
+	int mousedown;
+	int mousex;
+	int mousey;
+	int mousemotiontime;
 } Thoth_t;
 
 void Thoth_LoadFile(Thoth_t *t, char *path);
