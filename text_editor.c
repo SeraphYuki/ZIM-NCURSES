@@ -1752,9 +1752,9 @@ static void IndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 					RemoveStrFromText(t, &k, 1);
 					*sel = backup;
 					sel->len--;
-					}
 				}
-				next = GetStartOfNextLine(t->file->text, t->file->textLen, next);
+			}
+			next = GetStartOfNextLine(t->file->text, t->file->textLen, next);
 			} while(next < sel->startCursorPos+sel->len);
 			t->cursors[k].pos = next-1;
 	}
@@ -1964,7 +1964,13 @@ static void SelectBrackets(Thoth_Editor *t, Thoth_EditorCmd *c){
 				cursor->pos = last;
 			}
 			cursor->selection.startCursorPos = first + 1;
+			if(t->file->text[first+1] == '\n') cursor->selection.startCursorPos++;
 			cursor->selection.len = (last - first) - 1; // exclude brackets from selection
+			
+			last--;
+			while(t->file->text[last] == '\t' || t->file->text[last] == ' '
+			 || t->file->text[last] == '\n') {cursor->selection.len--; last--;}
+			cursor->pos = last;
 		}
 	}
 
