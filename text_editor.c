@@ -25,8 +25,8 @@
 
 
 enum {
-  SCR_NORM = 0,
-  SCR_CENT,
+	SCR_NORM = 0,
+	SCR_CENT,
 };
 
 static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c);
@@ -438,20 +438,20 @@ static void EventEnter(Thoth_Editor *t, int key){
 
 	if(t->autoCompleteLen){
 		Thoth_AutoCompleteOffset *ac = &t->autoComplete[t->autoCompleteIndex];
-
+	
 		char buffer[THOTH_MAX_AUTO_COMPLETE_STRLEN];
 		int len = ac->len - t->autoCompleteSearchLen;
 		int offset = ac->offset+t->autoCompleteSearchLen;
 		memcpy(buffer, &t->file->text[offset], len);
 		buffer[len] = 0;
-
-
+	
+	
 		Thoth_EditorCmd *command = 
 		CreateCommand((const unsigned int[]){0}, buffer, 0, SCR_CENT, AddCharacters, UndoAddCharacters);
 		ExecuteCommand(t,command);
 		FreeCommand(command);
-
-
+	
+	
 		ClearAutoComplete(t);
 		return;
 	}
@@ -464,6 +464,8 @@ static void EventEnter(Thoth_Editor *t, int key){
 		for(k = into; k < t->cursors[0].pos; k++, tabs++){
 			if(t->file->text[k] != '\t') break;
 		}
+		if(t->file->text[t->cursors[0].pos-1] == '{') tabs++;
+		
 		char *buffer = malloc(tabs + 2);
 		buffer[0] = '\n';
 		for(k = 1; k < tabs+1; k++) buffer[k] = '\t';
@@ -472,8 +474,6 @@ static void EventEnter(Thoth_Editor *t, int key){
 			SCR_CENT, AddCharacters, UndoAddCharacters);
 	} else {
 		command = CreateCommand((const unsigned int[]){0}, "\n", 0, 
-			SCR_CENT, AddCharacters, UndoAddCharacters);
-		command = CreateCommand((const unsigned int[]){0}, (const char[]){'\n', 0}, 0, 
 			SCR_CENT, AddCharacters, UndoAddCharacters);
 	}
 	ExecuteCommand(t,command);
@@ -563,7 +563,7 @@ static void ResolveCursorCollisions(Thoth_Editor *t, int *cursorIndex){
 
 						t->cursors[f].addedLen += t->cursors[j].addedLen;
 					}
-					t->cursors[f].selection.len += t->cursors[j].selection.len;
+					//t->cursors[f].selection.len += t->cursors[j].selection.len;
 
 					int m;
 					for(m = j; m < t->nCursors-1; m++){
@@ -577,9 +577,8 @@ static void ResolveCursorCollisions(Thoth_Editor *t, int *cursorIndex){
 						(*cursorIndex)--;
 
 					j--;
-					break;
-
-					}
+					//break;
+				}
 			}
 		}
 	}
@@ -905,6 +904,7 @@ static void MoveLineDown(Thoth_Editor *t, Thoth_EditorCur *cursor){
 		if(charsOnLine >= t->file->textLen || t->file->text[charsOnLine] != '\n') return; // end of file dont move down
 
 		charsOnLine = (charsOnLine - lineStart);
+
 
 		int startOfNextLine = lineStart+charsOnLine+1;
 		int nextLineLen = startOfNextLine;
@@ -1592,7 +1592,6 @@ static int GetBetweenBrackets(char *text, int len, int pos, int *first, int *las
 			}
 		}
 
-
 		if(endBracket != -1){ // comment , check up to first '\n' of line its on
 			int f;
 			for(f = j; f >= 1; f--){
@@ -1726,9 +1725,9 @@ static void IndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 		int next = sel->startCursorPos;
 		if(t->file->text[next] == '\n') next++;
 		do {
+
 			t->cursors[k].pos = next;
-		
-			if(c->num > 0){
+			if(c->num > 0 && t->file->text[next] != '\n'){
 				c->hiddenCursors = (Thoth_EditorCur *)realloc(c->hiddenCursors, sizeof(Thoth_EditorCur) * ++c->nHiddenCursors);
 				Thoth_EditorCur *cur = &c->hiddenCursors[c->nHiddenCursors-1];			
 				memset(cur, 0, sizeof(Thoth_EditorCur));
@@ -1738,7 +1737,6 @@ static void IndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 				cur->pos = t->cursors[k].pos;
 				sel->len++;
 			} else {
-				
 				if (t->file->text[next] == '\t' || t->file->text[next] == ' '){
 					c->hiddenCursors = (Thoth_EditorCur *)realloc(c->hiddenCursors, sizeof(Thoth_EditorCur) * ++c->nHiddenCursors);
 					Thoth_EditorCur *cur = &c->hiddenCursors[c->nHiddenCursors-1];
@@ -1749,14 +1747,15 @@ static void IndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 					cur->savedText[0] = '\t';
 					cur->savedText[1] = 0;
 					Thoth_EditorSelection backup = *sel;
+					
 					RemoveStrFromText(t, &k, 1);
 					*sel = backup;
 					sel->len--;
 				}
 			}
 			next = GetStartOfNextLine(t->file->text, t->file->textLen, next);
-			} while(next < sel->startCursorPos+sel->len);
-			t->cursors[k].pos = next-1;
+		} while(next < sel->startCursorPos+sel->len);
+		t->cursors[k].pos = next-1;
 	}
 	SaveCursors(t,c);
 }
@@ -1795,17 +1794,13 @@ static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c){
 	LoadCursors(t,c);
 	if(t->cursors[0].selection.len == 0) return;
 
-	int startSelection = t->cursors[0].selection.startCursorPos - 
-			GetCharsIntoLine(t->file->text, t->cursors[0].selection.startCursorPos);
+	int startSelection = t->cursors[0].selection.startCursorPos;
 
 	if(t->file->text[startSelection] == '\n')
 		startSelection++;
 
-	int endSelection = GetStartOfNextLine(t->file->text, t->file->textLen, 
-				t->cursors[0].selection.startCursorPos+t->cursors[0].selection.len)-1;
+	int endSelection = (t->cursors[0].selection.startCursorPos+t->cursors[0].selection.len)-1;
 
-	t->cursors[0].selection.len = endSelection - startSelection;
-	t->cursors[0].selection.startCursorPos = startSelection;
 
 	int k = 0;
 	int m;
@@ -1825,6 +1820,7 @@ static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c){
 			t->cursors[0].pos = m;
 			AddStrToText(t, &k, "/*");
 			endSelection+=2;
+			t->cursors[0].selection.len+=2;
 			m += 2;
 			break;
 		}
@@ -1835,11 +1831,10 @@ static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c){
 		endSelection -= 2;
 	} else {
 		AddStrToText(t, &k, "*/");
-		endSelection+=2;
+		t->cursors[0].selection.len+=2;
+			endSelection+=2;
 		m += 2;
 	}
-	t->cursors[0].selection.len = endSelection - startSelection;
-	t->cursors[0].selection.startCursorPos = startSelection;
 
 	SaveCursors(t,c);
 
@@ -1878,22 +1873,19 @@ static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 			if(toggled) continue;
 			t->cursors[k].pos = lineStart;
+			int m = lineStart;
+			while((t->file->text[m] == '\t' || t->file->text[m] == ' ')
+			 && m < lineEnd) m++;
+			
+			t->cursors[k].pos = m;
 			AddStrToText(t, &k, "//");
 			
 			continue;
 		}
 
-		int startSelection = t->cursors[k].selection.startCursorPos - 
-				GetCharsIntoLine(t->file->text, t->cursors[k].selection.startCursorPos);
+		int startSelection = t->cursors[k].selection.startCursorPos;
+		int endSelection = t->cursors[k].selection.startCursorPos+t->cursors[k].selection.len;
 
-		if(t->file->text[startSelection] == '\n')
-			startSelection++;
-
-		int endSelection = GetStartOfNextLine(t->file->text, t->file->textLen, 
-					t->cursors[k].selection.startCursorPos+t->cursors[k].selection.len)-1;
-
-		t->cursors[k].selection.len = endSelection - startSelection;
-		t->cursors[k].selection.startCursorPos = startSelection;
 
 		int m;
 		for(m = startSelection; m < endSelection; m++){
@@ -1988,9 +1980,11 @@ static void ExpandSelectionLines(Thoth_Editor *t, Thoth_EditorCmd *c){
 	for(f = 0; f < t->nCursors; f++){
 
 		Thoth_EditorCur *cursor = &t->cursors[f];
-		cursor->pos++;
 		if(cursor->selection.len == 0){
-			cursor->selection.startCursorPos = cursor->pos - GetCharsIntoLine(t->file->text, cursor->pos);
+			cursor->selection.startCursorPos = 
+			cursor->pos - GetCharsIntoLine(t->file->text, cursor->pos);
+		} else {
+			cursor->pos++;
 		}
 
 		if(c->num < 0)
@@ -2030,8 +2024,6 @@ static void UndoDeleteLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 	// RemoveSelections(t);
 	LoadCursors(t, c);
 	// RefreshEditorCommand(c);
-
-
 
 	int k;
 	for(k = 0; k < t->nCursors; k++){
@@ -2469,7 +2461,6 @@ static void RemoveCharacters(Thoth_Editor *t, Thoth_EditorCmd *c){
 	LoadCursors(t, c);
 
 	// RefreshEditorCommand(c);
-
 
 
 	int k;
@@ -3099,7 +3090,7 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 	t->file->text[len] = '\0';
 	int k;
 	for(k = 0; k < len-1; k++){
-		if(t->file->text[k] == '\r'){
+		if(t->file->text[k] == '\r' ){
 			for( m = k; m < len-1; m++){
 				t->file->text[m] = t->file->text[m+1]; 
 			}
@@ -3141,7 +3132,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	
 	t->cfg = cfg;
 
-	// logfile = fopen("log.txt", "wb");
+//	 logfile = fopen("log.txt", "wb");
 
 	initscr();
 	curs_set(0);
@@ -3152,14 +3143,14 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	start_color();
 	use_default_colors();
 
-	init_pair(THOTH_COLOR_SIDE_NUMBERS, COLOR_WHITE, COLOR_BLACK);
-	init_pair(THOTH_COLOR_NORMAL, COLOR_WHITE, COLOR_BLACK);
-	init_pair(THOTH_COLOR_KEYWORD, COLOR_CYAN, COLOR_BLACK);
-	init_pair(THOTH_COLOR_COMMENT, COLOR_WHITE, COLOR_BLACK);
-	init_pair(THOTH_COLOR_TOKEN, COLOR_GREEN, COLOR_BLACK);
-	init_pair(THOTH_COLOR_NUM, COLOR_RED, COLOR_BLACK);
-	init_pair(THOTH_COLOR_FUNCTION, COLOR_YELLOW, COLOR_BLACK);
-	init_pair(THOTH_COLOR_STRING, COLOR_MAGENTA, COLOR_BLACK);
+	init_pair(THOTH_COLOR_SIDE_NUMBERS, COLOR_CYAN, -1);
+	init_pair(THOTH_COLOR_NORMAL, COLOR_WHITE, -1);
+	init_pair(THOTH_COLOR_KEYWORD, COLOR_CYAN, -1);
+	init_pair(THOTH_COLOR_COMMENT, -1, -1);
+	init_pair(THOTH_COLOR_TOKEN, COLOR_GREEN, -1);
+	init_pair(THOTH_COLOR_NUM, COLOR_RED, -1);
+	init_pair(THOTH_COLOR_FUNCTION, COLOR_YELLOW, -1);
+	init_pair(THOTH_COLOR_STRING, COLOR_MAGENTA, -1);
 
 	init_pair(THOTH_COLOR_SELECTED, COLOR_BLACK ,COLOR_CYAN);
 	init_pair(THOTH_COLOR_SELECTED_DIRECTORY, COLOR_RED ,COLOR_CYAN);
@@ -3168,7 +3159,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	init_pair(THOTH_COLOR_LOG_UNSELECTED, COLOR_BLACK, COLOR_WHITE);
 	init_pair(THOTH_COLOR_CURSOR, COLOR_BLACK ,COLOR_MAGENTA);
 	init_pair(THOTH_COLOR_FIND, COLOR_BLACK ,COLOR_WHITE);
-	init_pair(THOTH_COLOR_LINE_NUM, COLOR_WHITE ,COLOR_BLACK);
+	init_pair(THOTH_COLOR_LINE_NUM, -1 ,-1);
 
 	init_pair(THOTH_TE_COLOR_BLACK, COLOR_BLACK ,COLOR_WHITE);
 	init_pair(THOTH_TE_COLOR_WHITE, COLOR_WHITE ,COLOR_BLACK);
@@ -3608,11 +3599,13 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 					last = k;
 					// params
+
+
 					int params[2] = {-1,-1};
 					int nParams = 0;
 					int lastParam = k;
 					while(k < logLen && t->loggingText[k] >= 0x30 && t->loggingText[k] <= 0x3F){
-						if(t->loggingText[k] == ';'){
+						if(t->loggingText[k] == ';' || t->loggingText[k] == 'm'){
 							t->loggingText[k] = 0;
 							params[nParams++] = atoi(&t->loggingText[lastParam]);
 							t->loggingText[k] = ';';
@@ -3629,17 +3622,19 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					}
 
 
-					while(k < logLen && t->loggingText[k] >= 0x20 && t->loggingText[k] <= 0x2F){ k++; }
+					while(k < logLen && 
+						t->loggingText[k] >= 0x20 && 
+						t->loggingText[k] <= 0x2F){ k++; }
 					
 					last = k;
 					// ending
 
-					if(k < logLen && t->loggingText[k] >= 0x40 && t->loggingText[k] <= 0x7e){ k++; }
+					if(k < logLen && t->loggingText[k] >= 0x40 
+						&& t->loggingText[k] <= 0x7e){ k++; }
 
 					if(t->loggingText[k-1] == 'm'){
 						int m;
 						for(m = 0; m < nParams; m++){
-							
 							if(params[m] >= 30){
 								int ansi = params[m]-30;
 								if(ansi >= 7) ansi = 7;
@@ -3947,13 +3942,13 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 	char buffer[10];
 
 	for(y = t->logY, k = 0; y < LINES; y++, k++){
-		sprintf(buffer, "%.4i ", t->file->scroll+k+1);
+		sprintf(buffer, "%.4i ", t->file->scroll+k);
 		Thoth_mvprintw(0, t->logY+k, buffer, strlen(buffer));
 	
 	}
-
-//	 } else {  easy selections have no highlighting
-//	 }
+	// draw filename
+	Thoth_mvprintw(COLS-(strlen(t->file->name)+1), LINES - 1, t->file->name, strlen(t->file->name));
+	// draw selections
 	int cur;
 	for(cur = 0; cur < t->nCursors; cur++){
 		Thoth_EditorCur *c = &t->cursors[cur];
@@ -4141,7 +4136,7 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 			StartLogging(t, THOTH_LOGMODE_CONSOLE);
 
 #ifdef LINUX_COMPILE
-
+		
 			openpty(&t->ttyMaster, &t->ttySlave, NULL, NULL, NULL);
 
 			t->_stderr = dup(STDERR_FILENO);
@@ -4234,7 +4229,6 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 	}
 
 	if(key == 127){ // backspace
-
 		Thoth_EditorCmd *command = CreateCommand((const unsigned int[]){0}, 0, 1, SCR_CENT, RemoveCharacters, UndoRemoveCharacters);
 		ExecuteCommand(t, command);
 		FreeCommand(command);
@@ -4242,7 +4236,6 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 	}
 
 	if(key >= 32 && key <= 126){
-
 		Thoth_EditorCmd *command = CreateCommand((const unsigned int[]){0}, (const char[]){(char)key, 0}, 0, SCR_CENT, AddCharacters, UndoAddCharacters);
 		ExecuteCommand(t,command);
 		FreeCommand(command);

@@ -98,6 +98,7 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_GREEN-1], (int[]){ THOTH_COLOR_GREEN ,THOTH_COLOR_BLACK }, sizeof(int)*2);
 	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_MAGENTA-1], (int[]){ THOTH_COLOR_MAGENTA ,THOTH_COLOR_BLACK }, sizeof(int)*2);
 
+
 	cfg->tabs = DEFAULT_TAB_WIDTH;
 //gruvbox
 //aurora
@@ -162,13 +163,11 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 			if(lineType[0] == '#'){
 			    while(!feof(fp) && fgetc(fp) != '\n'){}
 			    continue;
-    		}
+			}
 			
 
 			if(strcmp(lineType, "MakeCMD") == 0)
 			    fscanf(fp, "%s", cfg->makecmd);
-			else if(strcmp(lineType, "TabWidth") == 0)
-			    fscanf(fp, "%i", &cfg->tabs);
 			else if(strcmp(lineType, "COLOR_CYAN") == 0)
 			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_CYAN-1].r, &defaultColors[THOTH_COLOR_CYAN-1].g, &defaultColors[THOTH_COLOR_CYAN-1].b);
 			else if(strcmp(lineType, "COLOR_RED") == 0)

@@ -169,7 +169,7 @@ int main(int argc, char **argv){
 	// u32 currTime;
 	// u32 frames = 0;
 	// u32 lastSecond = SDL_GetTicks();
-    wclear(stdscr);
+	  wclear(stdscr);
 
    Thoth_Editor_Draw(&t.te);        
 

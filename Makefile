@@ -24,7 +24,7 @@ CC=gcc
 EXECUTABLE=zim
 CFLAGS = -g -Wall -lm -DLINUX_COMPILE -DLINUX_INSTALL -m64
 
-LIBS = $(shell pkg-config --libs ncurses)  $(shell pkg-config --libs x11)
+LIBS = -lncurses  $(shell pkg-config --libs x11)
 
 LDLIBS = -lm -static-libgcc $(LIBS)
 # add -pg for gdb

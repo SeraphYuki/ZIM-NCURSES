@@ -20,21 +20,21 @@ static int x11Init = 0;
 XIC X11_GetIC(){ return ic;}
 
 void X11_Init(){
-    display = XOpenDisplay(0);
-    char *id;
-    int revert;
-     unsigned int nchildren;
+	  display = XOpenDisplay(0);
+	  char *id;
+	  int revert;
+	   unsigned int nchildren;
 
     if((id = getenv("WINDOWID")) != NULL){
-        window = (Window)atoi(id);
-    } else {
-        XGetInputFocus(display, &window, &revert);
-    }
+	      window = (Window)atoi(id);
+	  } else {
+	      XGetInputFocus(display, &window, &revert);
+	  }
 
     if(!window) return;
 
     XWindowAttributes attr;
-    XGetWindowAttributes(display, window, &attr);
+	  XGetWindowAttributes(display, window, &attr);
 
 	int width = 0, height = 0;
 	
@@ -56,40 +56,40 @@ void X11_Init(){
 	}
 
      if(width == 1 && height == 1)
-         window = parent;
+	       window = parent;
 
     unsigned long windowMask;
-    XSetWindowAttributes winAttrib; 
-            
-    windowMask = CWBackPixel | CWBorderPixel ;
-    winAttrib.border_pixel = BlackPixel (display, 0);
-    winAttrib.background_pixel = BlackPixel (display, 0);
-    winAttrib.override_redirect = 0;
+	  XSetWindowAttributes winAttrib; 
+	          
+	  windowMask = CWBackPixel | CWBorderPixel ;
+	  winAttrib.border_pixel = BlackPixel (display, 0);
+	  winAttrib.background_pixel = BlackPixel (display, 0);
+	  winAttrib.override_redirect = 0;
 
     clipboardWindow = XCreateWindow(display, window, attr.x, attr.y, attr.width, attr.height, 
 	attr.border_width, attr.depth, attr.class, 
-        attr.visual, windowMask, &winAttrib );
+	      attr.visual, windowMask, &winAttrib );
 
 //    gc = XCreateGC(display, ourWindow, 0, NULL);
 
     xim = XOpenIM(display,NULL,NULL,NULL);
-    ic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, 
-        XNClientWindow, window, NULL);
+	  ic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, 
+	      XNClientWindow, window, NULL);
 
 	XSelectInput(display, parent,  FocusChangeMask);
-    XSelectInput(display, window, KeyPress | KeyRelease);
+	  XSelectInput(display, window, KeyPress | KeyRelease);
 	XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
 
 
 	targets_atom = XInternAtom(display, "TARGETS", 0);
 	text_atom = XInternAtom(display, "TEXT", 0);
-    UTF8 = XInternAtom(display, "UTF8_STRING",0);
-    XSEL_DATA = XInternAtom(display, "XSEL_DATA",0);
-    selection = XInternAtom(display, "CLIPBOARD",0);
+	  UTF8 = XInternAtom(display, "UTF8_STRING",0);
+	  XSEL_DATA = XInternAtom(display, "XSEL_DATA",0);
+	  selection = XInternAtom(display, "CLIPBOARD",0);
 	if(UTF8 == None) UTF8 = 31;
 
 
-    x11Init = 1;
+	  x11Init = 1;
 }
 
 void X11_Copy(char **clipboard){
@@ -138,8 +138,8 @@ void X11_NextEvent(XEvent *ev,char *clipboard){
 	if(ev->type == FocusIn && ev->xfocus.window == parent){
 		XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
 		XSetICFocus(ic);
-		XSelectInput(display, window, KeyPress | KeyRelease | FocusChangeMask);
-    } else if(ev->type == SelectionRequest){
+		XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
+	  } else if(ev->type == SelectionRequest){
 		
 		if(ev->xselectionrequest.selection == selection){
 			XSelectionRequestEvent *xsr = &ev->xselectionrequest;
@@ -163,16 +163,16 @@ void X11_NextEvent(XEvent *ev,char *clipboard){
 }
 
 void X11_Close(){
-    if(!x11Init) return;
+	  if(!x11Init) return;
 	XSetInputFocus(display, parent, RevertToParent, CurrentTime);
-    XDestroyIC(ic);
-    XCloseIM(xim);
+	  XDestroyIC(ic);
+	  XCloseIM(xim);
 	XDestroyWindow(display,clipboardWindow);
-    XCloseDisplay(display);
-    x11Init = 0;
+	  XCloseDisplay(display);
+	  x11Init = 0;
 }
 
 void X11_WithdrawWindow(){
-    if(!x11Init) return;
-    XSync(display,False);
+	  if(!x11Init) return;
+	  XSync(display,False);
 }
