@@ -1,24 +1,3 @@
-# wish i knew make, uncomment for library compile comment everything else
-# EXECUTABLE=libthoth.a
-# CC=gcc
-# EXECUTABLE=libthoth.a
-# CFLAGS = -g -Wall -lm -DLIBRARY_COMPILE -DLINUX_COMPILE  $(shell sdl2-config --cflags) $(shell pkg-config --cflags freetype2)
-# 
-# SOURCES=main.c text_editor.c window.c graphics.c log.c freetype.c file_browser.c config.c
-# OBJECTS=$(SOURCES:.c=.o)
-# 
-# 
-# all: $(SOURCES) $(EXECUTABLE)
-# 
-# $(EXECUTABLE): $(OBJECTS) 
-# 	ar -rc $@ $(OBJECTS)
-# 
-# .c.o:
-# 	$(CC) -c $(CFLAGS) $< -o $@
-# 
-# clean:
-# 	rm *.o
-
 # # linuxa
 CC=gcc
 EXECUTABLE=zim
@@ -27,40 +6,39 @@ CFLAGS = -g -Wall -lm -DLINUX_COMPILE -DLINUX_INSTALL -m64
 LIBS = -lncurses  $(shell pkg-config --libs x11)
 
 LDLIBS = -lm -static-libgcc $(LIBS)
-# add -pg for gdb
-
-
-# CC=mingw32-gcc
-# EXECUTABLE=zim.exe
-
-# FREETYPELIBS = -lfreetype
-# GLEWLIBS = -lglew32 -lopengl32 -mwindows
-# SDLLIBS = -lsdl2main -lsdl2
-# LDLIBS = -lm -lmingw32 $(GLEWLIBS) $(SDLLIBS) $(FREETYPELIBS) 
-# add -pg for gdb
-
-# windows
-#  CC=mingw32-gcc
-#  EXECUTABLE=zim.exe
-#  CFLAGS = -DWINDOWS_COMPILE \
-# -IC:/MinGW/include/freetype2/ -IC:/MinGW/include/
-
-#  LDLIBS = -m32 -lmingw32 -lSDL3 -mwindows  -lm -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8 \
-#    -lglew32 -lglu32 -lopengl32 \
-#    -lfreetype -lz -lpng
-
-# LIBS = -Wl,-Bdynamic -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglew32 -Wl,-Bstatic -lpng16 -lz -lm -Llib/freetype/lib/win_cb/ -lfreetype
 
 
 SOURCES=main.c \
 text_editor.c log.c file_browser.c config.c x11.c
-OBJECTS=$(SOURCES:.c=.o)
 
+
+
+CC_MINGW= x86_64-w64-mingw32-gcc
+
+EXECUTABLE_WINDOWS=zim.exe
+CFLAGS_WINDOWS = -g -Wall -lm -DWINDOWS -DWINDOWS_INSTALL  -DWINDOWS_COMPILE -I/usr/x86_64-w64-mingw32/usr/include
+
+LIBS_WINDOWS = -lmingw32 -lkernel32 -luser32 -lgdi32 -m64  -mwindows
+
+LDLIBS_WINDOWS = -lm -static-libgcc $(LIBS_WINDOWS)
+# add -pg for gdb
+
+
+SOURCES_WINDOWS=main_windows.c text_editor.c log.c file_browser.c config.c 
+
+OBJECTS=$(SOURCES:.c=.o)
+OBJECTS_MINGW=$(SOURCES_WINDOWS:.c=.o)
+
+
+# windows: $(SOURCES_WINDOWS) $(EXECUTABLE_WINDOWS)
 
 all: $(SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS) 
 	$(CC) $(OBJECTS) $(LDLIBS) -o $@
+
+$(EXECUTABLE_WINDOWS): $(OBJECTS_MINGW) 
+	$(CC_MINGW) $(OBJECTS_MINGW) $(LDLIBS_WINDOWS) -o $@
 
 # wihndows unused right now
 # all: createResourcesO $(SOURCES) $(EXECUTABLE)

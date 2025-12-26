@@ -1,6 +1,9 @@
 #ifndef TEXT_EDITOR_DEF
  #define TEXT_EDITOR_DEF
 #include <sys/types.h>
+#ifdef WINDOWS_COMPILE
+#include <windows.h>
+#endif
 #include "types.h"
 #include "config.h"
 #include "file_browser.h"
@@ -79,7 +82,7 @@
   Thoth_EditorSelection selection;
 
   //no longer used, now clipboard is from system, lines seperated by \n
-	int hiddenIndex;
+  int hiddenIndex;
   char *clipboard;
   int sClipboard;
   char *savedText;
@@ -121,6 +124,8 @@ typedef struct {
   Thoth_FileBrowser       fileBrowser;
   Thoth_EditorCmd         **lastCmd;  
 
+  int                     linesY;
+  int                     colsX;
   int                     nCommands;
   int                     selectNextWordTerminator; // "select" not get it in the phrase selecting
 
@@ -146,12 +151,16 @@ typedef struct {
   int                     ttySlave;
   int                     _stdout;
   int                     _stderr;
-	char 				*clipboard; 
+  char        *clipboard; 
 };
 
 
 void Thoth_Editor_LoadFile(Thoth_Editor *t, char *path);
+#ifdef WINDOWS_COMPILE
+void Thoth_Editor_Draw(Thoth_Editor *t,HWND hwnd);
+#elif LINUX_COMPILE
 void Thoth_Editor_Draw(Thoth_Editor *t);
+#endif
 void Thoth_Editor_Event(Thoth_Editor *t,unsigned int key);
 int Thoth_Editor_Destroy(Thoth_Editor *t);
 void Thoth_Editor_Init(Thoth_Editor *t, Thoth_Config *cfg);
