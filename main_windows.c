@@ -1,4 +1,4 @@
-#include <windows.h>
+#include "windows.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -165,8 +165,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
     RegisterClassW(&wc);
 	  window = CreateWindowW( wc.lpszClassName, (LPCWSTR)"ZIM",
-	      WS_OVERLAPPEDWINDOW | WS_POPUP | WS_VISIBLE ,
+	      WS_OVERLAPPEDWINDOW | WS_VISIBLE ,
 	      CW_USEDEFAULT, CW_USEDEFAULT, 1000, 1000, NULL, NULL, hInstance, NULL);
+
 
 
 	  SetTimer(window, 1, 50, NULL);
@@ -258,6 +259,7 @@ void Paint(HWND hwnd){
 		   t.state = THOTH_STATE_RUNNING;
 
 	   }
+
 
    Thoth_Editor_Draw(&t.te, hwnd);        
 

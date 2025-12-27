@@ -13,7 +13,10 @@ typedef struct {
 	int mousey;
 	int mousemotiontime;
 } Thoth_t;
-
+int Config_GetColor(int index);
+HFONT Config_GetFont();
+int Config_GetWidth();
+int Config_GetHeight();
 void Thoth_LoadFile(Thoth_t *t, char *path);
 void Thoth_Destroy(Thoth_t *t);
 Thoth_t *Thoth_Create(int w, int h);
@@ -34,9 +37,9 @@ char *Thoth_GetConfigPath(char *rel);
 #endif
 #ifdef WINDOWS_COMPILE
 #define THOTH_CONFIG_PATH "\\zim\\"
-#define THOTH_CONFIG_FILE Thoth_GetConfigPath(THOTH_CONFIG_PATH "zimconfig.cfg")
-#define THOTH_LOGFILE Thoth_GetConfigPath(THOTH_CONFIG_PATH "zimproject.zim")
-#define THOTH_LOGCOMPILEFILE Thoth_GetConfigPath(THOTH_CONFIG_PATH "zimlog.txt")
-char *Thoth_GetConfigPath(char *rel);
+#define THOTH_CONFIG_FILE Thoth_GetConfigPath(THOTH_CONFIG_PATH, "zimconfig.cfg")
+#define THOTH_LOGFILE Thoth_GetConfigPath(THOTH_CONFIG_PATH, "zimproject.zim")
+#define THOTH_LOGCOMPILEFILE Thoth_GetConfigPath(THOTH_CONFIG_PATH, "zimlog.txt")
+char *Thoth_GetConfigPath(char *rel, char *name);
 #endif
 #endif

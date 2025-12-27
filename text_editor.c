@@ -228,8 +228,9 @@ static void StartLogging(Thoth_Editor *t, int mode){
 
 static void EndLogging(Thoth_Editor *t){
 	t->logIndex = -1;
+#ifdef LINUX_COMPILE
 	wclear(stdscr);
-
+#endif
 	if(t->loggingText) free(t->loggingText);
 
 	if(t->logging == THOTH_LOGMODE_CONSOLE){
@@ -345,8 +346,8 @@ static void UpdateScroll(Thoth_Editor *t){
 
 	if(nLinesToCursor < t->file->scroll)
 		t->file->scroll = nLinesToCursor;
-	else if(nLinesToCursor >= (t->file->scroll + LINES) - t->logY )
-		t->file->scroll = (nLinesToCursor - LINES)+1+t->logY;
+	else if(nLinesToCursor >= (t->file->scroll + t->linesY) - t->logY )
+		t->file->scroll = (nLinesToCursor - t->linesY)+1+t->logY;
 
 }
 
@@ -355,11 +356,11 @@ static void UpdateScrollCenter(Thoth_Editor *t){
 
 	int nLinesToCursor = GetNumLinesToPos(t->file->text,t->cursors[t->nCursors-1].pos);
 
-	if(nLinesToCursor >= t->file->scroll && nLinesToCursor < t->file->scroll + LINES - t->logY){
+	if(nLinesToCursor >= t->file->scroll && nLinesToCursor < t->file->scroll + t->linesY - t->logY){
 		return;
 	}	
 
-	t->file->scroll = nLinesToCursor  - (LINES/2);
+	t->file->scroll = nLinesToCursor  - (t->linesY/2);
 
 	if(t->file->scroll < 0) t->file->scroll = 0;
 
@@ -1470,9 +1471,9 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 	LoadCursors(t, c);
 
 	// RefreshEditorCommand(c);
-
+#ifdef LINUX_COMPILE
 	X11_Paste(&t->clipboard);
-	
+#endif
 	char *clipboard = t->clipboard;
 	if(c->keys && strlen(c->keys)){
 		clipboard = c->keys;
@@ -2136,7 +2137,9 @@ static void Copy(Thoth_Editor *t, Thoth_EditorCmd *c){
 		buffer[bufferLen-1] = '\n';
 		buffer[bufferLen] = 0;
 		t->clipboard = buffer;
+#ifdef LINUX_COMPILE
 		X11_Copy(&t->clipboard);
+#endif 
 	}
 }
 
@@ -3146,7 +3149,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	t->cfg = cfg;
 
 //	 logfile = fopen("log.txt", "wb");
-
+#ifdef LINUX_COMPILE
 	initscr();
 	curs_set(0);
 	raw();
@@ -3185,7 +3188,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 
 	wclear(stdscr);
 	timeout(50);
-
+#endif
 
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_UP] , 0}, "", -1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_DOWN] , 0}, "", 1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
@@ -3499,6 +3502,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t,HWND hwnd){
 
     PAINTSTRUCT ps;
 
+    HDC hdcScreen = GetDC(NULL);
+  HDC hdcScreenDC = CreateCompatibleDC(hdcScreen);
     HDC hdc = BeginPaint(hwnd, &ps);
 	  HDC hdcMem = CreateCompatibleDC(hdc);
 
@@ -3508,9 +3513,13 @@ void Thoth_Editor_Draw(Thoth_Editor *t,HWND hwnd){
 	  HBITMAP hbmMem = CreateCompatibleBitmap(ps.hdc,cliRect.right - cliRect.left, cliRect.bottom-cliRect.top );
 	  HBITMAP hbmOld = SelectObject(hdcMem, hbmMem);
 	  FillRect(hdcMem, &cliRect, winBgColorBrush);
+
+
+
 	t->linesY = (cliRect.bottom - cliRect.top) / Config_GetHeight();
 	t->colsX = (cliRect.right - cliRect.left) / Config_GetWidth();
 	Thoth_attron(hdcMem, THOTH_COLOR_NORMAL);
+
 
 #elif LINUX_COMPILE
 void Thoth_Editor_Draw(Thoth_Editor *t){
