@@ -1813,7 +1813,7 @@ static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c){
 	if(t->file->text[startSelection] == '\n')
 		startSelection++;
 
-	int endSelection = (t->cursors[0].selection.startCursorPos+t->cursors[0].selection.len)-1;
+	int endSelection = (t->cursors[0].selection.startCursorPos+t->cursors[0].selection.len);
 
 
 	int k = 0;
@@ -3177,14 +3177,14 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	init_pair(THOTH_COLOR_FIND, COLOR_BLACK ,COLOR_WHITE);
 	init_pair(THOTH_COLOR_LINE_NUM, -1 ,-1);
 
-	init_pair(THOTH_TE_COLOR_BLACK, COLOR_BLACK ,COLOR_WHITE);
-	init_pair(THOTH_TE_COLOR_WHITE, COLOR_WHITE ,COLOR_BLACK);
-	init_pair(THOTH_TE_COLOR_CYAN, COLOR_CYAN ,COLOR_BLACK);
-	init_pair(THOTH_TE_COLOR_RED, COLOR_RED ,COLOR_BLACK);
-	init_pair(THOTH_TE_COLOR_YELLOW, COLOR_YELLOW ,COLOR_BLACK);
-	init_pair(THOTH_TE_COLOR_BLUE, THOTH_COLOR_BLUE ,COLOR_BLACK);
-	init_pair(THOTH_TE_COLOR_GREEN, COLOR_GREEN ,COLOR_BLACK);
-	init_pair(THOTH_TE_COLOR_MAGENTA, COLOR_MAGENTA ,COLOR_BLACK);
+	init_pair(THOTH_TE_COLOR_BLACK, COLOR_BLACK ,-1);
+	init_pair(THOTH_TE_COLOR_WHITE, COLOR_WHITE ,-1);
+	init_pair(THOTH_TE_COLOR_CYAN, COLOR_CYAN ,-1);
+	init_pair(THOTH_TE_COLOR_RED, COLOR_RED ,-1);
+	init_pair(THOTH_TE_COLOR_YELLOW, COLOR_YELLOW ,-1);
+	init_pair(THOTH_TE_COLOR_BLUE, THOTH_COLOR_BLUE ,-1);
+	init_pair(THOTH_TE_COLOR_GREEN, COLOR_GREEN ,-1);
+	init_pair(THOTH_TE_COLOR_MAGENTA, COLOR_MAGENTA ,-1);
 
 	wclear(stdscr);
 	timeout(50);
@@ -3503,8 +3503,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t,HWND hwnd){
     PAINTSTRUCT ps;
 
     HDC hdcScreen = GetDC(NULL);
-  HDC hdcScreenDC = CreateCompatibleDC(hdcScreen);
-    HDC hdc = BeginPaint(hwnd, &ps);
+	HDC hdcScreenDC = CreateCompatibleDC(hdcScreen);
+	  HDC hdc = BeginPaint(hwnd, &ps);
 	  HDC hdcMem = CreateCompatibleDC(hdc);
 
     RECT cliRect;
@@ -3664,7 +3664,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		}
 	}
 
-//
+	Thoth_attron(hdcMem,(THOTH_COLOR_NORMAL));
 	if(t->logging == THOTH_LOGMODE_CONSOLE){
 		int logLen = strlen(t->loggingText);
 		
@@ -3701,8 +3701,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					int params[2] = {-1,-1};
 					int nParams = 0;
 					int lastParam = k;
-					while(k < logLen ){
-						if(t->loggingText[k] == ';' || t->loggingText[k] == 'm'){
+					while(k < logLen && t->loggingText[k] >= 0x30 && t->loggingText[k] <= 0x3F){						
+						if(t->loggingText[k] == ';'){
 							t->loggingText[k] = 0;
 							params[nParams++] = atoi(&t->loggingText[lastParam]);
 							t->loggingText[k] = ';';
@@ -3717,10 +3717,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 						params[nParams++] = atoi(&t->loggingText[lastParam]);
 						t->loggingText[k] = tmp;
 					}
-
-
 					while(k < logLen && t->loggingText[k] >= 0x20 && t->loggingText[k] <= 0x2F){ k++; }
-					
 					last = k;
 					// ending
 
@@ -4039,7 +4036,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		Thoth_mvprintw(hdcMem, 0, t->logY+k, buffer, strlen(buffer));
 	
 	}
-
+	Thoth_mvprintw(hdcMem, t->colsX - (strlen(t->file->name) +1), t->linesY-1, t->file->name, strlen(t->file->name));
 //	 } else {  easy selections have no highlighting
 //	 }
 	int cur;
@@ -4155,11 +4152,11 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 	}
 #ifdef WINDOWS_COMPILE
-    BitBlt(ps.hdc, cliRect.left, cliRect.top, cliRect.right-cliRect.left, cliRect.bottom - cliRect.top, hdcMem, 0, 0, SRCCOPY);
+	  BitBlt(ps.hdc, cliRect.left, cliRect.top, cliRect.right-cliRect.left, cliRect.bottom - cliRect.top, hdcMem, 0, 0, SRCCOPY);
 	  SelectObject(hdcMem, hbmOld);
 
 
-    DeleteObject(hbmMem);
+	  DeleteObject(hbmMem);
 	  DeleteDC(hdcMem);
 	  EndPaint(hwnd, &ps);
 #elif LINUX_COMPILE

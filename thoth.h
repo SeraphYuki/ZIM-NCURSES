@@ -13,10 +13,12 @@ typedef struct {
 	int mousey;
 	int mousemotiontime;
 } Thoth_t;
+#ifdef WINDOWS_COMPILE
 int Config_GetColor(int index);
 HFONT Config_GetFont();
 int Config_GetWidth();
 int Config_GetHeight();
+#endif
 void Thoth_LoadFile(Thoth_t *t, char *path);
 void Thoth_Destroy(Thoth_t *t);
 Thoth_t *Thoth_Create(int w, int h);

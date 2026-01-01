@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include "ncurses/ncurses.h"
+#include <ncurses.h>
 #include "text_editor.h"
 #include "memory.h"
 #include "config.h"

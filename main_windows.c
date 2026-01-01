@@ -261,7 +261,7 @@ void Paint(HWND hwnd){
 	   }
 
 
-   Thoth_Editor_Draw(&t.te, hwnd);        
+	 Thoth_Editor_Draw(&t.te, hwnd);        
 
 }
 
