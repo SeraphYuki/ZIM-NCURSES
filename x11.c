@@ -24,24 +24,24 @@ static int x11Init = 0;
 XIC X11_GetIC(){ return ic;}
 
 void X11_Init(){
-	  display = XOpenDisplay(0);
-	  char *id;
-	  int revert;
-	   unsigned int nchildren;
+	display = XOpenDisplay(0);
+	char *id;
+	int revert;
+	unsigned int nchildren;
 
-    if((id = getenv("WINDOWID")) != NULL){
-	      window = (Window)atoi(id);
-	  } else {
-	      XGetInputFocus(display, &window, &revert);
-	  }
+	if((id = getenv("WINDOWID")) != NULL){
+		window = (Window)atoi(id);
+	} else {
+		XGetInputFocus(display, &window, &revert);
+	}
 
-    if(!window) return;
+	if(!window) return;
 
-    XWindowAttributes attr;
-	  XGetWindowAttributes(display, window, &attr);
+	XWindowAttributes attr;
+	XGetWindowAttributes(display, window, &attr);
 
 	int width = 0, height = 0;
-	
+
 	while(1){
 		Window p_window;
 		XQueryTree(display, window, &root, &parent, &children, &nchildren);
@@ -55,192 +55,191 @@ void X11_Init(){
 				window = children[i];
 			}
 		}
-	
+
 		if(p_window == window) break;
 	}
 
-     if(width == 1 && height == 1)
-	       window = parent;
+	if(width == 1 && height == 1)
+	window = parent;
 
-    unsigned long windowMask;
-	  XSetWindowAttributes winAttrib; 
-	          
-	  windowMask = CWBackPixel | CWBorderPixel ;
-	  winAttrib.border_pixel = BlackPixel (display, 0);
-	  winAttrib.background_pixel = BlackPixel (display, 0);
-	  winAttrib.override_redirect = 0;
-	  clipboardWindow = XCreateWindow(display, window, attr.x, attr.y, attr.width, attr.height, 
+	unsigned long windowMask;
+	XSetWindowAttributes winAttrib; 
+	  
+	windowMask = CWBackPixel | CWBorderPixel ;
+	winAttrib.border_pixel = BlackPixel (display, 0);
+	winAttrib.background_pixel = BlackPixel (display, 0);
+	winAttrib.override_redirect = 0;
+	clipboardWindow = XCreateWindow(display, window, attr.x, attr.y, attr.width, attr.height, 
 	attr.border_width, attr.depth, attr.class, 
-	      attr.visual, windowMask, &winAttrib );
+	attr.visual, windowMask, &winAttrib );
 
-	  imgWindow = XCreateWindow(display, window, attr.x, attr.y, attr.width, attr.height, 
+	imgWindow = XCreateWindow(display, window, attr.x, attr.y, attr.width, attr.height, 
 	attr.border_width, attr.depth, attr.class, 
-	      attr.visual, windowMask, &winAttrib );
+	attr.visual, windowMask, &winAttrib );
 
 
-	  gc = XCreateGC(display, imgWindow, 0, NULL);
+	gc = XCreateGC(display, imgWindow, 0, NULL);
 
-    xim = XOpenIM(display,NULL,NULL,NULL);
-	  ic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, 
-	      XNClientWindow, window, NULL);
+	xim = XOpenIM(display,NULL,NULL,NULL);
+	ic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, 
+		XNClientWindow, window, NULL);
 
 	XSelectInput(display, parent,  FocusChangeMask);
-	  XSelectInput(display, window, KeyPress | KeyRelease);
+	XSelectInput(display, window, KeyPress | KeyRelease);
 	XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
 
 
 	targets_atom = XInternAtom(display, "TARGETS", 0);
 	text_atom = XInternAtom(display, "TEXT", 0);
-	  UTF8 = XInternAtom(display, "UTF8_STRING",0);
-	  XSEL_DATA = XInternAtom(display, "XSEL_DATA",0);
-	  selection = XInternAtom(display, "CLIPBOARD",0);
+	UTF8 = XInternAtom(display, "UTF8_STRING",0);
+	XSEL_DATA = XInternAtom(display, "XSEL_DATA",0);
+	selection = XInternAtom(display, "CLIPBOARD",0);
 	if(UTF8 == None) UTF8 = 31;
 
-
-	  x11Init = 1;
+	x11Init = 1;
 }
 
 
 int X11_LoadPNG(FILE *fp, Image *img){
 
-    unsigned char header[8];
-	  fread(header, 1, 8, fp);
-	  int ispng = !png_sig_cmp(header, 0, 8); 
+	unsigned char header[8];
+	fread(header, 1, 8, fp);
+	int ispng = !png_sig_cmp(header, 0, 8); 
 
-    if(!ispng){
-	      return 0;
-	  }
+	if(!ispng){
+		return 0;
+	}
 
-    png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	  if(!png_ptr) {
-	      return 0;
-	  }
+	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if(!png_ptr) {
+		return 0;
+	}
 
-    png_infop info_ptr = png_create_info_struct(png_ptr);
-	  if(!info_ptr){
-	      png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-	      return 0;
-	  }
+	png_infop info_ptr = png_create_info_struct(png_ptr);
+	if(!info_ptr){
+		png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+		return 0;
+	}
 
-    if(setjmp(png_jmpbuf(png_ptr))){
-	      png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-	      return 0;
-	  }
+	if(setjmp(png_jmpbuf(png_ptr))){
+		png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+		return 0;
+	}
 
-    png_set_sig_bytes(png_ptr, 8);
-	  png_init_io(png_ptr, fp);
-	  png_read_info(png_ptr, info_ptr);
+	png_set_sig_bytes(png_ptr, 8);
+	png_init_io(png_ptr, fp);
+	png_read_info(png_ptr, info_ptr);
 
-    int bit_depth, color_type;
-	  png_uint_32 twidth, theight;
+	int bit_depth, color_type;
+	png_uint_32 twidth, theight;
 
-    png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type, NULL, NULL, NULL);
+	png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type, NULL, NULL, NULL);
 
-    if(color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
-	      png_set_gray_to_rgb(png_ptr);
+	if(color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+	png_set_gray_to_rgb(png_ptr);
 
-    if(color_type == PNG_COLOR_TYPE_PALETTE)
-	      png_set_palette_to_rgb(png_ptr);
+	if(color_type == PNG_COLOR_TYPE_PALETTE)
+	png_set_palette_to_rgb(png_ptr);
 
-    png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type, NULL, NULL, NULL);
+	png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type, NULL, NULL, NULL);
 
-    if(png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) 
-	      png_set_tRNS_to_alpha(png_ptr);
+	if(png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) 
+	png_set_tRNS_to_alpha(png_ptr);
 
-    if(bit_depth < 8)
-	      png_set_packing(png_ptr);
+	if(bit_depth < 8)
+	png_set_packing(png_ptr);
 
-    if(color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY)
-	      png_set_add_alpha(png_ptr, 255, PNG_FILLER_AFTER);
+	if(color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY)
+	png_set_add_alpha(png_ptr, 255, PNG_FILLER_AFTER);
 
-    png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type, NULL, NULL, NULL);
+	png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type, NULL, NULL, NULL);
 
-    img->width = twidth;
-	  img->height = theight;
+	img->width = twidth;
+	img->height = theight;
 
-    png_read_update_info(png_ptr, info_ptr);
+	png_read_update_info(png_ptr, info_ptr);
 
-    int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+	int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
 
-    png_byte *image_data = (png_byte *)malloc(sizeof(png_byte) * rowbytes * img->height);
-	  if(!image_data){
-	      png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-	      free(img);
-	      return 0;
-	  }
+	png_byte *image_data = (png_byte *)malloc(sizeof(png_byte) * rowbytes * img->height);
+	if(!image_data){
+		png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+		free(img);
+		return 0;
+	}
 
-    png_bytep *row_pointers = (png_bytep *) malloc(sizeof(png_bytep) * img->height);
-	  if(!row_pointers){
-	      png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-	      free(image_data);
-	      free(img);
-	      return 0;
-	  }
+	png_bytep *row_pointers = (png_bytep *) malloc(sizeof(png_bytep) * img->height);
+	if(!row_pointers){
+		png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+		free(image_data);
+		free(img);
+		return 0;
+	}
 
-    int i;
-	  for( i = 0; i < img->height; ++i)
-	      row_pointers[img->height - 1 - i] = &image_data[(img->height - 1 - i) * rowbytes];
-	  
-	  png_read_image(png_ptr, row_pointers);
-	  png_read_end(png_ptr, NULL);
+	int i;
+	for( i = 0; i < img->height; ++i)
+		row_pointers[img->height - 1 - i] = &image_data[(img->height - 1 - i) * rowbytes];
 
-    img->pixels = (char *)image_data;
-	  img->channels = 4;
+	png_read_image(png_ptr, row_pointers);
+	png_read_end(png_ptr, NULL);
 
-	  png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-	  if(row_pointers) free(row_pointers);
+	img->pixels = (char *)image_data;
+	img->channels = 4;
 
-	  return 1;
+	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+	if(row_pointers) free(row_pointers);
+
+	return 1;
 }
 
 int X11_LoadJPEG(FILE *fp, Image *image){
-	  struct jpeg_decompress_struct info;
-	  struct jpeg_error_mgr jerror;
-	  jmp_buf jmp_buffer;
-	  int err = 0;
+	struct jpeg_decompress_struct info;
+	struct jpeg_error_mgr jerror;
+	jmp_buf jmp_buffer;
+	int err = 0;
 
 
-	  info.err = jpeg_std_error(&jerror);
+	info.err = jpeg_std_error(&jerror);
 
-    void func(j_common_ptr cinfo){
-	      err = 1;
-	      longjmp(jmp_buffer, 1);
-	  }
+	void func(j_common_ptr cinfo){
+		err = 1;
+		longjmp(jmp_buffer, 1);
+	}
 
-    info.err->error_exit = func;
-	  if(setjmp(jmp_buffer)){
-	      jpeg_destroy_decompress(&info);
-	      return 0;
-	  }
+	info.err->error_exit = func;
+	if(setjmp(jmp_buffer)){
+		jpeg_destroy_decompress(&info);
+		return 0;
+	}
 
-    if(err) {
-	      jpeg_finish_decompress(&info);
-	      jpeg_destroy_decompress(&info);
-	      return 0;
-	  }
+	if(err) {
+		jpeg_finish_decompress(&info);
+		jpeg_destroy_decompress(&info);
+		return 0;
+	}
 
-    jpeg_create_decompress(&info);
-	  jpeg_stdio_src(&info, fp);
-	  jpeg_read_header(&info, TRUE);
-	  jpeg_start_decompress(&info);
+	jpeg_create_decompress(&info);
+	jpeg_stdio_src(&info, fp);
+	jpeg_read_header(&info, TRUE);
+	jpeg_start_decompress(&info);
 
-    image->pixels = NULL;
-	  image->width =  info.output_width;
-	  image->height = info.output_height;
-	  image->channels = info.num_components;
+	image->pixels = NULL;
+	image->width =  info.output_width;
+	image->height = info.output_height;
+	image->channels = info.num_components;
 
-    int data_size = image->width * image->height * image->channels;
-	  image->pixels = (char *)malloc(sizeof(char) * data_size);
-	  char *rowptr[1];
-	  while(info.output_scanline < info.output_height){
-	      rowptr[0] = (char *)image->pixels + 3 * info.output_width * info.output_scanline;
-	      jpeg_read_scanlines(&info, (JSAMPARRAY)rowptr, 1);
-	  }
+	int data_size = image->width * image->height * image->channels;
+	image->pixels = (char *)malloc(sizeof(char) * data_size);
+	char *rowptr[1];
+	while(info.output_scanline < info.output_height){
+		rowptr[0] = (char *)image->pixels + 3 * info.output_width * info.output_scanline;
+		jpeg_read_scanlines(&info, (JSAMPARRAY)rowptr, 1);
+	}
 
-    jpeg_finish_decompress(&info);
-	  jpeg_destroy_decompress(&info);
-	
-	  return 1;
+	jpeg_finish_decompress(&info);
+	jpeg_destroy_decompress(&info);
+
+	return 1;
 }
 
 
@@ -293,7 +292,7 @@ void X11_DrawImage(Image *image,int xPos, int yPos, int drawWidth, int drawHeigh
 	  out:
 
 
-    XMoveResizeWindow(display, imgWindow, xPos, yPos, drawWidth, drawHeight);
+	  XMoveResizeWindow(display, imgWindow, xPos, yPos, drawWidth, drawHeight);
 
     XGetWindowAttributes(display, window, &attr);
 
@@ -328,7 +327,6 @@ void X11_DestroyImage(Image *image){
 
 void X11_Copy(char **clipboard){
 	XSetSelectionOwner(display,selection,window,0);
-
 }
 
 void X11_Paste(char **clipboard){
@@ -367,6 +365,7 @@ void X11_Paste(char **clipboard){
 }
 
 void X11_NextEvent(XEvent *ev,char *clipboard){
+
 	XNextEvent(display,ev);
 
 	if(ev->type == FocusIn && ev->xfocus.window == parent){
@@ -397,18 +396,18 @@ void X11_NextEvent(XEvent *ev,char *clipboard){
 }
 
 void X11_Close(){
-	  if(!x11Init) return;
+	if(!x11Init) return;
 	XSetInputFocus(display, parent, RevertToParent, CurrentTime);
-	  XDestroyIC(ic);
-	  XCloseIM(xim);
+	XDestroyIC(ic);
+	XCloseIM(xim);
 	XFreeGC(display, gc);
-		XDestroyWindow(display,clipboardWindow);
-		XDestroyWindow(display,imgWindow);
-	  XCloseDisplay(display);
-	  x11Init = 0;
+	XDestroyWindow(display,clipboardWindow);
+	XDestroyWindow(display,imgWindow);
+	XCloseDisplay(display);
+	x11Init = 0;
 }
 
 void X11_WithdrawWindow(){
-	  if(!x11Init) return;
-	  XSync(display,False);
+	if(!x11Init) return;
+	XSync(display,False);
 }

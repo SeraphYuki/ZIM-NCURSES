@@ -35,12 +35,9 @@ enum {
 	SCR_CENT,
 };
 
-
 #ifndef UNUSED
 #define UNUSED(x) (void)(x)
 #endif
-
-
 
 static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c);
@@ -146,7 +143,7 @@ const char *keywords[] = {
 	"out", "override", "private", "protected", "return", "set", "shared", "super", "switch", "this", "true", "typedef", "uint",
 	"uint8", "uint16", "uint32", "uint64", "void", "while", "xor", "end", "function", "local", "nil", "repeat", "then", "until",
 	"auto", "bool", "char", "class", "double", "float", "int", "enum", "const", "static", "include", "define", "ifndef", "endif", 
-	"ifdef", "struct", "unsigned",
+	"ifdef", "struct", "unsigned","def",
 };
 
 static char *basename(char *path){
@@ -507,7 +504,7 @@ static void GetWordStartEnd(char *text, int cPos, int *s, int *e){
 
 	for(; k >= 0; k--)
 		if(IsToken(text[k])) break;
-
+j
 	*s = k+1;
 
 	for(k = *s; k < (int)strlen(text); k++)
@@ -536,7 +533,7 @@ static int GetWordStart(char *text, int cPos){
 
 static int GetStartOfPrevLine(char *text, int cPos){
 
-	int k;;
+	int k;
 	for(k = cPos-1; k >= 0; k--)
 		if(text[k] == '\n'){
 			for(k = k-1; k >= 0; k--)
@@ -1072,11 +1069,8 @@ static void DoSwitchFile(Thoth_Editor *t){
 	LogLineSelectorEnter(t);
 }
 
-static void DoSaveFile(Thoth_Editor *t){
-	t->file->unsaved = 0;
-	FILE *fp = fopen(t->file->path, "wb");
-
-	fwrite(t->file->text,1,strlen(t->file->text),fp);
+static void FileBrowserPath(Thoth_Editor *t){
+	if(strlen(t->file->path) == 0) return;
 	strcpy(t->fileBrowser.directory, t->file->path);
 	int k;
 	for(k = strlen(t->fileBrowser.directory)-2; k >= 0; k--)
@@ -1085,6 +1079,13 @@ static void DoSaveFile(Thoth_Editor *t){
 	if(k > 0)
 		t->fileBrowser.directory[k+1] = 0;
 	Thoth_FileBrowser_ChangeDirectory(&t->fileBrowser);
+}
+static void DoSaveFile(Thoth_Editor *t){
+	t->file->unsaved = 0;
+	FILE *fp = fopen(t->file->path, "wb");
+
+	fwrite(t->file->text,1,strlen(t->file->text),fp);
+	FileBrowserPath(t);
 	fclose(fp);
 	EndLogging(t);
 }
@@ -1093,6 +1094,7 @@ static void RefreshFile(Thoth_Editor *t){
 	InitCursors(t);
 	t->cursors[0].pos = t->file->cursorPos;
 	ClearAutoComplete(t);
+	FileBrowserPath(t);
 	t->selectNextWordTerminator = 0;
 }
 static void NewFile(Thoth_Editor *t, Thoth_EditorCmd *c){
@@ -1160,6 +1162,10 @@ static void SaveFile(Thoth_Editor *t, Thoth_EditorCmd *c){
 	EndLogging(t);
 	if(strlen(t->file->path) == 0){
 		StartLogging(t, THOTH_LOGMODE_SAVE);
+		int k;
+		for(k=0;k<strlen(t->fileBrowser.directory);k++){
+			LoggingAddCharacter(t,t->fileBrowser.directory[k]);
+		}
 		return;
 	}
 	DoSaveFile(t);
@@ -2137,7 +2143,7 @@ static void Copy(Thoth_Editor *t, Thoth_EditorCmd *c){
 		buffer = realloc(buffer, bufferLen+1);
 		buffer[bufferLen-1] = '\n';
 		buffer[bufferLen] = 0;
-		t->clipboard = buffer;
+		t->clipboard=buffer;
 #ifdef LINUX_COMPILE
 		X11_Copy(&t->clipboard);
 #endif 
@@ -2662,12 +2668,10 @@ static void LoggingPaste(Thoth_Editor *t){
 #ifdef LINUX_COMPILE
 	X11_Paste(&t->clipboard);
 #endif
-	if(t->clipboard){
-		int k;
-		for(k = 0; k < strlen(t->clipboard); k++){
-			if(t->clipboard[k] == '\n') break;
-			LoggingAddCharacter(t, t->clipboard[k]);
-		}
+	int k;
+	for(k = 0; k < strlen(t->clipboard); k++){
+		if(t->clipboard[k] == '\n') break;
+		LoggingAddCharacter(t, t->clipboard[k]);
 	}
 }
 
@@ -2898,8 +2902,7 @@ static void RedoCommands(Thoth_Editor *t, int num){
 		num = t->file->sHistory - t->file->historyPos;
 
 	if(num <= 0) return;
-
-
+	
 	int k;
 	for(k = 0; k < num; k++){
 		t->file->history[(t->file->historyPos)+k]->Execute(t, t->file->history[(t->file->historyPos)+k]);
@@ -2960,7 +2963,7 @@ static void ExecuteCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	EditFunc BufferExpandFuncs[2] = {
 		AddCharacters,
-		// RemoveCharacters
+ 		// RemoveCharacters
 	};
 	int BufferExpandFuncsLen = sizeof(BufferExpandFuncs)/sizeof(EditFunc);
 
@@ -3059,6 +3062,7 @@ static Thoth_EditorFile *CreateTextEditorFile(char *path){
 		}
 		if(k < 0) k++;
 		strcpy(ret->name, &path[k]);
+
 	}
 	return ret;
 }
@@ -3068,8 +3072,8 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 	if(t->file && t->cursors)
 		t->file->cursorPos = t->cursors[0].pos;
 
-	
 	if(pathRel == NULL){
+
 		t->file = CreateTextEditorFile(NULL);
 		t->file->text = malloc(1);
 		t->file->text[0] = 0;
@@ -3077,6 +3081,7 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 		AddFile(t, t->file);
 		goto endfile;
 	}
+
 
 	char path[MAX_PATH_LEN] = {0};
 #ifdef WINDOWS_COMPILE
@@ -3090,7 +3095,6 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 	}
 
 #endif
-
 
 	Thoth_EditorFile *file = CreateTextEditorFile(path);
 
@@ -3983,7 +3987,6 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					else
 						escaped = 0;
 
-
 				}
 				if(text[k] != '\n')
 					k++;
@@ -4017,7 +4020,6 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		sprintf(buffer, "%.4i ", t->file->scroll+k);
 		Thoth_mvprintw(hdcMem, 0, t->logY+k, buffer, strlen(buffer));
 	}
-	Thoth_mvprintw(hdcMem, t->colsX - (strlen(t->file->name) +1), t->linesY-1, t->file->name, strlen(t->file->name));
 
 	int cur;
 	for(cur = 0; cur < t->nCursors; cur++){
@@ -4425,7 +4427,6 @@ int Thoth_Editor_Destroy(Thoth_Editor *t){
 	for(k = 0; k < t->nCommands; k++)
 		FreeCommand(t->commands[k]);
 
-	if(t->clipboard) free(t->clipboard);
 	FreeCursors(t);
 	Thoth_FileBrowser_Free(&t->fileBrowser);
 	return 1;

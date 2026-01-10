@@ -194,8 +194,6 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 				ReadCommand(&cfg->keybinds[THOTH_MoveLinesText_DOWN]);
 			else if(strcmp(lineType, "OpenFileBrowser") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_OpenFileBrowser]);
-			else if(strcmp(lineType, "OpenFileZim") == 0)
-				ReadCommand(&cfg->keybinds[THOTH_OpenFileZim]);
 			else if(strcmp(lineType, "NewFile") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_NewFile]);
 			else if(strcmp(lineType, "CloseFile") == 0)
@@ -208,6 +206,8 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 				ReadCommand(&cfg->keybinds[THOTH_SaveFile]);
 			else if(strcmp(lineType, "ToggleComment") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_ToggleComment]);
+			else if(strcmp(lineType, "ToggleCommentMulti") == 0)
+				ReadCommand(&cfg->keybinds[THOTH_ToggleCommentMulti]);
 			else if(strcmp(lineType, "MoveBrackets") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_MoveBrackets]);
 			else if(strcmp(lineType, "SelectBrackets") == 0)
