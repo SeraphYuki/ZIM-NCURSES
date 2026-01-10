@@ -100,7 +100,7 @@ void X11_Init(){
 	  x11Init = 1;
 }
 
-static void InitSongImage(Image *img, int xPos, int yPos, int drawWidth, int drawHeight);
+static void ImitImage(Image *img, int xPos, int yPos, int drawWidth, int drawHeight);
 
 int X11_LoadPNG(FILE *fp, Image *img){
 
@@ -191,7 +191,7 @@ int X11_LoadPNG(FILE *fp, Image *img){
 	  png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 	  if(row_pointers) free(row_pointers);
 
-	InitSongImage(img,0,0,img->width,img->height);
+	ImitImage(img,0,0,img->width,img->height);
 	  return 1;
 }
 
@@ -241,13 +241,13 @@ int X11_LoadJPEG(FILE *fp, Image *image){
 
     jpeg_finish_decompress(&info);
 	  jpeg_destroy_decompress(&info);
-	InitSongImage(image,0,0,image->width,image->height);
+	ImitImage(image,0,0,image->width,image->height);
 	
 	  return 1;
 }
 
 
-static void InitSongImage(Image *img, int xPos, int yPos, int drawWidth, int drawHeight){
+static void ImitImage(Image *img, int xPos, int yPos, int drawWidth, int drawHeight){
 
     float xPlus = (float)img->width / (float)drawWidth;
 	  float yPlus = (float)img->height / (float)drawHeight;
