@@ -12,6 +12,8 @@ typedef struct {
 	int mousex;
 	int mousey;
 	int mousemotiontime;
+
+
 } Thoth_t;
 #ifdef WINDOWS_COMPILE
 int Config_GetColor(int index);

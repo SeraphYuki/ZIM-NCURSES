@@ -117,7 +117,7 @@ typedef struct {
 
  struct Thoth_Editor {
 
-  Thoth_Config            *cfg;
+	Thoth_Config            *cfg;
 	Thoth_EditorCmd       **commands;
 	Thoth_AutoCompleteOffset      autoComplete[THOTH_MAX_AUTO_COMPLETE];
 	Thoth_EditorCur        *cursors;
@@ -126,34 +126,35 @@ typedef struct {
 	Thoth_FileBrowser       fileBrowser;
 	Thoth_EditorCmd         **lastCmd;  
 
-  int                     linesY;
+	int                     linesY;
 	int                     colsX;
 	int                     nCommands;
 	int                     selectNextWordTerminator; // "select" not get it in the phrase selecting
 
-  int                     autoCompleteSearchLen;
+	int                     autoCompleteSearchLen;
 	int                     autoCompleteLen;
 	int                     autoCompleteIndex;
 
-  int                     logging;
+
+	int                     logging;
 	int                     logIndex;
 	char                    *loggingText;
 
-  int                     nFiles;
+	int                     nFiles;
 
-  int                     mouseSelection;
+	int                     mouseSelection;
 	int                     nCursors;
 	int                     logX;
 	int                     logY;
 
-  int                     quit;
+	int                     quit;
 
-  int                     ttyPid;
+	int                     ttyPid;
 	int                     ttyMaster;
 	int                     ttySlave;
 	int                     _stdout;
 	int                     _stderr;
-	char        *clipboard; 
+	char        			*clipboard; 
 };
 
 

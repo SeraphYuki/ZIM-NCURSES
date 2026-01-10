@@ -923,7 +923,6 @@ static void MoveLineDown(Thoth_Editor *t, Thoth_EditorCur *cursor){
 
 		charsOnLine = (charsOnLine - lineStart);
 
-
 		int startOfNextLine = lineStart+charsOnLine+1;
 		int nextLineLen = startOfNextLine;
 		for(; nextLineLen < t->file->textLen && t->file->text[nextLineLen] != '\n'; nextLineLen++);
@@ -2659,6 +2658,19 @@ static void LoggingAddCharacter(Thoth_Editor *t, char c){
 	}
 }
 
+static void LoggingPaste(Thoth_Editor *t){
+#ifdef LINUX_COMPILE
+	X11_Paste(&t->clipboard);
+#endif
+	if(t->clipboard){
+		int k;
+		for(k = 0; k < strlen(t->clipboard); k++){
+			if(t->clipboard[k] == '\n') break;
+			LoggingAddCharacter(t, t->clipboard[k]);
+		}
+	}
+}
+
 static void AddCharacters(Thoth_Editor *t, Thoth_EditorCmd *c){
 	
 	if(t->file->text == NULL) return;
@@ -3022,7 +3034,7 @@ static void FreeFile(Thoth_EditorFile *f){
 	int k;
 	for(k = 0; k < f->sHistory; k++)
 		FreeCommand(f->history[k]);
-	if(f->img.xi) X11_DestroyImage(&f->img);	
+	if(f->img.pixels) X11_DestroyImage(&f->img);	
 	if(f->history) free(f->history);
 	free(f);
 }
@@ -3399,7 +3411,6 @@ static int CursorPos(Thoth_Editor *t, int x, int y){
 		if(x > lx){
 			 x = lx;
 		}
-
 	}
 
 
@@ -3537,19 +3548,19 @@ void Thoth_attron(HDC hdcMem, int color){
 #ifdef WINDOWS_COMPILE
 void Thoth_Editor_Draw(Thoth_Editor *t,HWND hwnd){
 
-    PAINTSTRUCT ps;
+	PAINTSTRUCT ps;
 
-    HDC hdcScreen = GetDC(NULL);
+	HDC hdcScreen = GetDC(NULL);
 	HDC hdcScreenDC = CreateCompatibleDC(hdcScreen);
-	  HDC hdc = BeginPaint(hwnd, &ps);
-	  HDC hdcMem = CreateCompatibleDC(hdc);
+	HDC hdc = BeginPaint(hwnd, &ps);
+	HDC hdcMem = CreateCompatibleDC(hdc);
 
-    RECT cliRect;
-	  GetClientRect(hwnd, &cliRect);
-	  HBRUSH winBgColorBrush = CreateSolidBrush((COLORREF){Config_GetColor(0)});
-	  HBITMAP hbmMem = CreateCompatibleBitmap(ps.hdc,cliRect.right - cliRect.left, cliRect.bottom-cliRect.top );
-	  HBITMAP hbmOld = SelectObject(hdcMem, hbmMem);
-	  FillRect(hdcMem, &cliRect, winBgColorBrush);
+	RECT cliRect;
+	GetClientRect(hwnd, &cliRect);
+	HBRUSH winBgColorBrush = CreateSolidBrush((COLORREF){Config_GetColor(0)});
+	HBITMAP hbmMem = CreateCompatibleBitmap(ps.hdc,cliRect.right - cliRect.left, cliRect.bottom-cliRect.top );
+	HBITMAP hbmOld = SelectObject(hdcMem, hbmMem);
+	FillRect(hdcMem, &cliRect, winBgColorBrush);
 
 
 
@@ -3568,9 +3579,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 #endif
 
-	if(t->file->img.xi){
-		
-		 X11_DrawImage(&t->file->img,0, 0, t->colsX, t->linesY);
+	if(t->file->img.pixels){
+		X11_DrawImage(&t->file->img,0, 0, t->colsX, t->linesY);
 		wclear(stdscr);
 		wrefresh(stdscr);
 		return;
@@ -4006,11 +4016,9 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 	for(y = t->logY, k = 0; y < t->linesY; y++, k++){
 		sprintf(buffer, "%.4i ", t->file->scroll+k);
 		Thoth_mvprintw(hdcMem, 0, t->logY+k, buffer, strlen(buffer));
-	
 	}
 	Thoth_mvprintw(hdcMem, t->colsX - (strlen(t->file->name) +1), t->linesY-1, t->file->name, strlen(t->file->name));
-//	 } else {  easy selections have no highlighting
-//	 }
+
 	int cur;
 	for(cur = 0; cur < t->nCursors; cur++){
 		Thoth_EditorCur *c = &t->cursors[cur];
@@ -4191,6 +4199,11 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 			t->quit = 1;
 			return;
 		}
+		if(t->logging && key == t->cfg->keybinds[THOTH_Paste]){
+			LoggingPaste(t);
+			return;
+		}
+
 		if(key == ((( unsigned int)'b') | THOTH_CTRL_KEY) && t->logging != THOTH_LOGMODE_CONSOLE){
 	
 			if(strlen(t->file->path) > 0){
