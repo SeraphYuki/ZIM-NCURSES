@@ -504,7 +504,7 @@ static void GetWordStartEnd(char *text, int cPos, int *s, int *e){
 
 	for(; k >= 0; k--)
 		if(IsToken(text[k])) break;
-j
+
 	*s = k+1;
 
 	for(k = *s; k < (int)strlen(text); k++)
@@ -555,8 +555,10 @@ static void ResolveCursorCollisions(Thoth_Editor *t, int *cursorIndex){
 					Thoth_EditorCur *c1 = &t->cursors[j];
 					Thoth_EditorCur *c2 = &t->cursors[f];
 
-					if((c1->selection.len && c2->selection.len && ((c1->selection.startCursorPos <= c2->selection.startCursorPos + c2->selection.len)
-						&& c1->selection.startCursorPos >= c2->selection.startCursorPos)) || c1->pos == c2->pos){
+					if((c1->selection.len && c2->selection.len && 
+					((c1->selection.startCursorPos <= c2->selection.startCursorPos + c2->selection.len)
+						&& c1->selection.startCursorPos >= c2->selection.startCursorPos)) ||
+						 c1->pos == c2->pos){
 					
 
 					if(j+1 < t->nCursors){
@@ -2501,7 +2503,6 @@ static void RemoveCharacters(Thoth_Editor *t, Thoth_EditorCmd *c){
 				RemoveStrFromText(t, &k, c->num);
 			}
 		} else {
-
 			EraseAllSelectedText(t, &k, c);
 		}
 	}
@@ -2528,7 +2529,10 @@ static void UndoAddCharacters(Thoth_Editor *t, Thoth_EditorCmd *c){
 	for(k = c->nSavedCursors-1; k >= 0; k--){
 		RemoveStrFromText(t, &k, strlen(c->keys));
 		if(k < c->nSavedCursors && c->savedCursors[k].savedText){
+			t->cursors[k].selection.startCursorPos = t->cursors[k].pos;
 			AddStrToText(t, &k, c->savedCursors[k].savedText);
+			t->cursors[k].selection.len = strlen(c->savedCursors[k].savedText);
+		
 		}
 	}
 
