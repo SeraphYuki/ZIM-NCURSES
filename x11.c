@@ -100,7 +100,6 @@ void X11_Init(){
 	  x11Init = 1;
 }
 
-static void ImitImage(Image *img, int xPos, int yPos, int drawWidth, int drawHeight);
 
 int X11_LoadPNG(FILE *fp, Image *img){
 
@@ -191,7 +190,6 @@ int X11_LoadPNG(FILE *fp, Image *img){
 	  png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 	  if(row_pointers) free(row_pointers);
 
-	ImitImage(img,0,0,img->width,img->height);
 	  return 1;
 }
 
@@ -241,36 +239,51 @@ int X11_LoadJPEG(FILE *fp, Image *image){
 
     jpeg_finish_decompress(&info);
 	  jpeg_destroy_decompress(&info);
-	ImitImage(image,0,0,image->width,image->height);
 	
 	  return 1;
 }
 
 
-static void ImitImage(Image *img, int xPos, int yPos, int drawWidth, int drawHeight){
+void X11_DrawImage(Image *image,int xPos, int yPos, int drawWidth, int drawHeight){
 
-    float xPlus = (float)img->width / (float)drawWidth;
-	  float yPlus = (float)img->height / (float)drawHeight;
-	  char *pixels = (char*)malloc(sizeof(char) * img->width/xPlus * img->height/yPlus * 3);
+	XWindowAttributes attr;
+	XMapWindow(display, imgWindow);
+	XGetWindowAttributes(display, window, &attr);
+
+	if(image == NULL){
+	    XMoveResizeWindow(display, imgWindow, 0, 0, 1, 1);
+		return;
+	}
+
+
+	drawWidth = attr.width * (image->width/image->height);
+	drawHeight = attr.height * (image->width/image->height);
+
+	  if(drawWidth <= 0) drawWidth = 1;
+	  if(drawHeight <= 0) drawHeight = 1;
+
+    float xPlus = (float)image->width / (float)drawWidth;
+	  float yPlus = (float)image->height / (float)drawHeight;
+	  char *pixels = (char*)malloc(sizeof(char) * image->width/xPlus * image->height/yPlus * 3);
 
     int pixelIndex = 0;
 	  int xround, yround;
 
     float x, y;
-	  for(y = 0; y < img->height; y+=yPlus){
-	      for(x = 0; x < img->width; x+=xPlus){
+	  for(y = 0; y < image->height; y+=yPlus){
+	      for(x = 0; x < image->width; x+=xPlus){
 
             if(round(x/xPlus) >= drawWidth) continue;
 
-            yround = round(y)*img->width;
+            yround = round(y)*image->width;
 	          xround = round(x);
-	          if(xround > img->width) break;
+	          if(xround > image->width) break;
 
-            char r = img->pixels[((yround + xround)*img->channels)  ] & 0xFF;
-	          char g = img->pixels[((yround + xround)*img->channels)+1] & 0xFF;
-	          char b = img->pixels[((yround + xround)*img->channels)+2] & 0xFF;
+            char r = image->pixels[((yround + xround)*image->channels)  ] & 0xFF;
+	          char g = image->pixels[((yround + xround)*image->channels)+1] & 0xFF;
+	          char b = image->pixels[((yround + xround)*image->channels)+2] & 0xFF;
 
-            if(pixelIndex+3 > img->width/xPlus * img->height/yPlus * 3) goto out;
+            if(pixelIndex+3 > image->width/xPlus * image->height/yPlus * 3) goto out;
 	          pixels[pixelIndex++] = r;
 	          pixels[pixelIndex++] = g;
 	          pixels[pixelIndex++] = b;
@@ -279,10 +292,10 @@ static void ImitImage(Image *img, int xPos, int yPos, int drawWidth, int drawHei
 	  
 	  out:
 
-    XWindowAttributes attr;
-	XMapWindow(display, imgWindow);
 
-    XGetWindowAttributes(display, imgWindow, &attr);
+    XMoveResizeWindow(display, imgWindow, xPos, yPos, drawWidth, drawHeight);
+
+    XGetWindowAttributes(display, window, &attr);
 
 	int *newBuf = (int *)malloc(sizeof(int)*drawWidth*drawHeight);
 	int newbufIndex = 0;
@@ -298,39 +311,21 @@ static void ImitImage(Image *img, int xPos, int yPos, int drawWidth, int drawHei
 	    newBuf[newbufIndex++] = r | g | b;
 	}
 
-	img->xi = XCreateImage(display, attr.visual, 
+	image->xi = XCreateImage(display, attr.visual, 
 	    attr.depth, ZPixmap, 0, (char *)newBuf, drawWidth, drawHeight, 32, 0);
 
-	XInitImage(img->xi);
+
+	XInitImage(image->xi);
 	
-	  if(pixels) free(pixels);
+	XGetWindowAttributes(display, window, &attr);
+
+	XPutImage(display, imgWindow, gc, image->xi, 0, 0, 0, 0, attr.width, attr.width);
+	XDestroyImage(image->xi);
+}
+void X11_DestroyImage(Image *image){
+	if(image->pixels) free(image->pixels);
 }
 
-void X11_DrawImage(Image *image,int xPos, int yPos, int drawWidth, int drawHeight){
-
-	XWindowAttributes attr;
-	XMapWindow(display, imgWindow);
-	XGetWindowAttributes(display, imgWindow, &attr);
-
-	if(image == NULL){
-	    XMoveResizeWindow(display, imgWindow, 0, 0, 1, 1);
-		return;
-	}
-
-
-	drawWidth = image->width / attr.width;
-	drawHeight = image->height / attr.height;
-
-	  if(drawWidth <= 0) drawWidth = 1;
-	  if(drawHeight <= 0) drawHeight = 1;
-
-    XMoveResizeWindow(display, imgWindow, xPos, yPos, drawWidth, drawHeight);
-
-	XPutImage(display, imgWindow, gc, image->xi, 0, 0, 0, 0, drawWidth, drawHeight);
-}
-void X11_DestroyImage(Image *img){
-	XDestroyImage(img->xi);
-}
 void X11_Copy(char **clipboard){
 	XSetSelectionOwner(display,selection,window,0);
 
