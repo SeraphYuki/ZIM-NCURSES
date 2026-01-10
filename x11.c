@@ -5,12 +5,16 @@
 #include <unistd.h>
 #include <math.h>
 #include <string.h>
+#include <jpeglib.h>
+#include <jerror.h>
+#include <png.h>
 #include "utils.h"
 #include "x11.h"
 
 static Display *display;
-static Window window, root, *children, parent, clipboardWindow;
+static Window window, root, *children, parent, clipboardWindow, imgWindow;
 static XIC ic;
+static GC gc;
 static XIM xim;
 static Atom targets_atom, selection;
 static Atom text_atom;
@@ -65,12 +69,16 @@ void X11_Init(){
 	  winAttrib.border_pixel = BlackPixel (display, 0);
 	  winAttrib.background_pixel = BlackPixel (display, 0);
 	  winAttrib.override_redirect = 0;
-
-    clipboardWindow = XCreateWindow(display, window, attr.x, attr.y, attr.width, attr.height, 
+	  clipboardWindow = XCreateWindow(display, window, attr.x, attr.y, attr.width, attr.height, 
 	attr.border_width, attr.depth, attr.class, 
 	      attr.visual, windowMask, &winAttrib );
 
-//    gc = XCreateGC(display, ourWindow, 0, NULL);
+	  imgWindow = XCreateWindow(display, window, attr.x, attr.y, attr.width, attr.height, 
+	attr.border_width, attr.depth, attr.class, 
+	      attr.visual, windowMask, &winAttrib );
+
+
+	  gc = XCreateGC(display, imgWindow, 0, NULL);
 
     xim = XOpenIM(display,NULL,NULL,NULL);
 	  ic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, 
@@ -92,6 +100,237 @@ void X11_Init(){
 	  x11Init = 1;
 }
 
+static void InitSongImage(Image *img, int xPos, int yPos, int drawWidth, int drawHeight);
+
+int X11_LoadPNG(FILE *fp, Image *img){
+
+    unsigned char header[8];
+	  fread(header, 1, 8, fp);
+	  int ispng = !png_sig_cmp(header, 0, 8); 
+
+    if(!ispng){
+	      return 0;
+	  }
+
+    png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	  if(!png_ptr) {
+	      return 0;
+	  }
+
+    png_infop info_ptr = png_create_info_struct(png_ptr);
+	  if(!info_ptr){
+	      png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+	      return 0;
+	  }
+
+    if(setjmp(png_jmpbuf(png_ptr))){
+	      png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+	      return 0;
+	  }
+
+    png_set_sig_bytes(png_ptr, 8);
+	  png_init_io(png_ptr, fp);
+	  png_read_info(png_ptr, info_ptr);
+
+    int bit_depth, color_type;
+	  png_uint_32 twidth, theight;
+
+    png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type, NULL, NULL, NULL);
+
+    if(color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+	      png_set_gray_to_rgb(png_ptr);
+
+    if(color_type == PNG_COLOR_TYPE_PALETTE)
+	      png_set_palette_to_rgb(png_ptr);
+
+    png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type, NULL, NULL, NULL);
+
+    if(png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) 
+	      png_set_tRNS_to_alpha(png_ptr);
+
+    if(bit_depth < 8)
+	      png_set_packing(png_ptr);
+
+    if(color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY)
+	      png_set_add_alpha(png_ptr, 255, PNG_FILLER_AFTER);
+
+    png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type, NULL, NULL, NULL);
+
+    img->width = twidth;
+	  img->height = theight;
+
+    png_read_update_info(png_ptr, info_ptr);
+
+    int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+
+    png_byte *image_data = (png_byte *)malloc(sizeof(png_byte) * rowbytes * img->height);
+	  if(!image_data){
+	      png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+	      free(img);
+	      return 0;
+	  }
+
+    png_bytep *row_pointers = (png_bytep *) malloc(sizeof(png_bytep) * img->height);
+	  if(!row_pointers){
+	      png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+	      free(image_data);
+	      free(img);
+	      return 0;
+	  }
+
+    int i;
+	  for( i = 0; i < img->height; ++i)
+	      row_pointers[img->height - 1 - i] = &image_data[(img->height - 1 - i) * rowbytes];
+	  
+	  png_read_image(png_ptr, row_pointers);
+	  png_read_end(png_ptr, NULL);
+
+    img->pixels = (char *)image_data;
+	  img->channels = 4;
+
+	  png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+	  if(row_pointers) free(row_pointers);
+
+	InitSongImage(img,0,0,img->width,img->height);
+	  return 1;
+}
+
+int X11_LoadJPEG(FILE *fp, Image *image){
+	  struct jpeg_decompress_struct info;
+	  struct jpeg_error_mgr jerror;
+	  jmp_buf jmp_buffer;
+	  int err = 0;
+
+
+	  info.err = jpeg_std_error(&jerror);
+
+    void func(j_common_ptr cinfo){
+	      err = 1;
+	      longjmp(jmp_buffer, 1);
+	  }
+
+    info.err->error_exit = func;
+	  if(setjmp(jmp_buffer)){
+	      jpeg_destroy_decompress(&info);
+	      return 0;
+	  }
+
+    if(err) {
+	      jpeg_finish_decompress(&info);
+	      jpeg_destroy_decompress(&info);
+	      return 0;
+	  }
+
+    jpeg_create_decompress(&info);
+	  jpeg_stdio_src(&info, fp);
+	  jpeg_read_header(&info, TRUE);
+	  jpeg_start_decompress(&info);
+
+    image->pixels = NULL;
+	  image->width =  info.output_width;
+	  image->height = info.output_height;
+	  image->channels = info.num_components;
+
+    int data_size = image->width * image->height * image->channels;
+	  image->pixels = (char *)malloc(sizeof(char) * data_size);
+	  char *rowptr[1];
+	  while(info.output_scanline < info.output_height){
+	      rowptr[0] = (char *)image->pixels + 3 * info.output_width * info.output_scanline;
+	      jpeg_read_scanlines(&info, (JSAMPARRAY)rowptr, 1);
+	  }
+
+    jpeg_finish_decompress(&info);
+	  jpeg_destroy_decompress(&info);
+	InitSongImage(image,0,0,image->width,image->height);
+	
+	  return 1;
+}
+
+
+static void InitSongImage(Image *img, int xPos, int yPos, int drawWidth, int drawHeight){
+
+    float xPlus = (float)img->width / (float)drawWidth;
+	  float yPlus = (float)img->height / (float)drawHeight;
+	  char *pixels = (char*)malloc(sizeof(char) * img->width/xPlus * img->height/yPlus * 3);
+
+    int pixelIndex = 0;
+	  int xround, yround;
+
+    float x, y;
+	  for(y = 0; y < img->height; y+=yPlus){
+	      for(x = 0; x < img->width; x+=xPlus){
+
+            if(round(x/xPlus) >= drawWidth) continue;
+
+            yround = round(y)*img->width;
+	          xround = round(x);
+	          if(xround > img->width) break;
+
+            char r = img->pixels[((yround + xround)*img->channels)  ] & 0xFF;
+	          char g = img->pixels[((yround + xround)*img->channels)+1] & 0xFF;
+	          char b = img->pixels[((yround + xround)*img->channels)+2] & 0xFF;
+
+            if(pixelIndex+3 > img->width/xPlus * img->height/yPlus * 3) goto out;
+	          pixels[pixelIndex++] = r;
+	          pixels[pixelIndex++] = g;
+	          pixels[pixelIndex++] = b;
+	      }
+	  }
+	  
+	  out:
+
+    XWindowAttributes attr;
+	XMapWindow(display, imgWindow);
+
+    XGetWindowAttributes(display, imgWindow, &attr);
+
+	int *newBuf = (int *)malloc(sizeof(int)*drawWidth*drawHeight);
+	int newbufIndex = 0;
+	int k;
+	for(k = 0; k < drawWidth*drawHeight*3; k+=3){
+	    int r = (pixels[k]   & 0xFF) * (attr.visual->red_mask   / 255);
+	    int g = (pixels[k+1] & 0xFF) * (attr.visual->green_mask / 255);
+	    int b = (pixels[k+2] & 0xFF) * (attr.visual->blue_mask  / 255);
+	    r &= attr.visual->red_mask;
+	    g &= attr.visual->green_mask;
+	    b &= attr.visual->blue_mask;
+
+	    newBuf[newbufIndex++] = r | g | b;
+	}
+
+	img->xi = XCreateImage(display, attr.visual, 
+	    attr.depth, ZPixmap, 0, (char *)newBuf, drawWidth, drawHeight, 32, 0);
+
+	XInitImage(img->xi);
+	
+	  if(pixels) free(pixels);
+}
+
+void X11_DrawImage(Image *image,int xPos, int yPos, int drawWidth, int drawHeight){
+
+	XWindowAttributes attr;
+	XMapWindow(display, imgWindow);
+	XGetWindowAttributes(display, imgWindow, &attr);
+
+	if(image == NULL){
+	    XMoveResizeWindow(display, imgWindow, 0, 0, 1, 1);
+		return;
+	}
+
+
+	drawWidth = image->width / attr.width;
+	drawHeight = image->height / attr.height;
+
+	  if(drawWidth <= 0) drawWidth = 1;
+	  if(drawHeight <= 0) drawHeight = 1;
+
+    XMoveResizeWindow(display, imgWindow, xPos, yPos, drawWidth, drawHeight);
+
+	XPutImage(display, imgWindow, gc, image->xi, 0, 0, 0, 0, drawWidth, drawHeight);
+}
+void X11_DestroyImage(Image *img){
+	XDestroyImage(img->xi);
+}
 void X11_Copy(char **clipboard){
 	XSetSelectionOwner(display,selection,window,0);
 
@@ -167,7 +406,9 @@ void X11_Close(){
 	XSetInputFocus(display, parent, RevertToParent, CurrentTime);
 	  XDestroyIC(ic);
 	  XCloseIM(xim);
-	XDestroyWindow(display,clipboardWindow);
+	XFreeGC(display, gc);
+		XDestroyWindow(display,clipboardWindow);
+		XDestroyWindow(display,imgWindow);
 	  XCloseDisplay(display);
 	  x11Init = 0;
 }

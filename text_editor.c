@@ -5,6 +5,7 @@
 #include "file_browser.h"
 #include <stdio.h>
 #include <fcntl.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <ncurses.h>
@@ -30,7 +31,6 @@
 void clear(){}
 #endif
 enum {
-
 	SCR_NORM = 0,
 	SCR_CENT,
 };
@@ -146,7 +146,7 @@ const char *keywords[] = {
 	"out", "override", "private", "protected", "return", "set", "shared", "super", "switch", "this", "true", "typedef", "uint",
 	"uint8", "uint16", "uint32", "uint64", "void", "while", "xor", "end", "function", "local", "nil", "repeat", "then", "until",
 	"auto", "bool", "char", "class", "double", "float", "int", "enum", "const", "static", "include", "define", "ifndef", "endif", 
-	"ifdef", "struct",
+	"ifdef", "struct", "unsigned",
 };
 
 static char *basename(char *path){
@@ -229,18 +229,19 @@ static void StartLogging(Thoth_Editor *t, int mode){
 static void EndLogging(Thoth_Editor *t){
 	t->logIndex = -1;
 #ifdef LINUX_COMPILE
-	wclear(stdscr);
+		wclear(stdscr);
 #endif
 	if(t->loggingText) free(t->loggingText);
 
 	if(t->logging == THOTH_LOGMODE_CONSOLE){
 #ifdef LINUX_COMPILE
-		fsync(STDERR_FILENO);
-		fsync(STDOUT_FILENO);
-		dup2(t->_stderr, STDERR_FILENO);
-		dup2(t->_stdout, STDOUT_FILENO);
-		close(t->ttyMaster);
-		close(t->ttySlave);
+		//fsync(STDERR_FILENO);
+		//fsync(STDOUT_FILENO);
+		//dup2(t->_stderr, STDERR_FILENO);
+		//dup2(t->_stdout, STDOUT_FILENO);
+		initscr();		
+		//if(t->ttyMaster) close(t->ttyMaster);
+		//if(t->ttySlave) close(t->ttySlave);
 #endif
 	}
 
@@ -377,7 +378,7 @@ static void ScrollToLine(Thoth_Editor *t){
 
 	int line = atoi(t->loggingText);
 
-	free(t->loggingText);
+	if(t->loggingText) free(t->loggingText);
 	t->loggingText = NULL;
 
 	if(line == 0){
@@ -414,6 +415,31 @@ static void ScrollToLine(Thoth_Editor *t){
 static void EventCtrlEnter(Thoth_Editor *t, Thoth_EditorCmd *c){
 	if(t->logging == THOTH_LOGMODE_TEXT) FindTextGoto(t, -1, 0);
 	if(t->logging == THOTH_LOGMODE_TEXT_INSENSITIVE) FindTextGoto(t, -1, 1);
+}
+static void NewLinesElastic(Thoth_Editor *t){
+	Thoth_EditorCmd *command;
+	if(t->nCursors == 1){
+		int into = t->cursors[0].pos - GetCharsIntoLine(t->file->text, t->cursors[0].pos);
+		int tabs = 0;
+		int k;
+		for(k = into; k < t->cursors[0].pos; k++, tabs++){
+			if(t->file->text[k] != '\t') break;
+		}
+		if(t->file->text[t->cursors[0].pos-1] == '{') tabs++;
+
+		char *buffer = malloc(tabs + 2);
+		buffer[0] = '\n';
+		for(k = 1; k < tabs+1; k++) buffer[k] = '\t';
+		buffer[k] = 0;
+		command = CreateCommand((const unsigned int[]){0}, buffer, 0, 
+			SCR_CENT, AddCharacters, UndoAddCharacters);
+	} else {
+		command = CreateCommand((const unsigned int[]){0}, "\n", 0, 
+			SCR_CENT, AddCharacters, UndoAddCharacters);
+	}
+	
+	ExecuteCommand(t,command);
+	FreeCommand(command);
 }
 
 static void EventEnter(Thoth_Editor *t, int key){
@@ -470,28 +496,7 @@ static void EventEnter(Thoth_Editor *t, int key){
 		return;
 	}
 
-	Thoth_EditorCmd *command;
-	if(t->nCursors == 1){
-		int into = t->cursors[0].pos - GetCharsIntoLine(t->file->text, t->cursors[0].pos);
-		int tabs = 0;
-		int k;
-		for(k = into; k < t->cursors[0].pos; k++, tabs++){
-			if(t->file->text[k] != '\t') break;
-		}
-		if(t->file->text[t->cursors[0].pos-1] == '{') tabs++;
-		
-		char *buffer = malloc(tabs + 2);
-		buffer[0] = '\n';
-		for(k = 1; k < tabs+1; k++) buffer[k] = '\t';
-		buffer[k] = 0;
-		command = CreateCommand((const unsigned int[]){0}, buffer, 0, 
-			SCR_CENT, AddCharacters, UndoAddCharacters);
-	} else {
-		command = CreateCommand((const unsigned int[]){0}, "\n", 0, 
-			SCR_CENT, AddCharacters, UndoAddCharacters);
-	}
-	ExecuteCommand(t,command);
-	FreeCommand(command);
+	NewLinesElastic(t);
 }
 
 static void GetWordStartEnd(char *text, int cPos, int *s, int *e){
@@ -577,8 +582,7 @@ static void ResolveCursorCollisions(Thoth_Editor *t, int *cursorIndex){
 
 						t->cursors[f].addedLen += t->cursors[j].addedLen;
 					}
-					//t->cursors[f].selection.len += t->cursors[j].selection.len;
-
+					
 					int m;
 					for(m = j; m < t->nCursors-1; m++){
 						t->cursors[m] = t->cursors[m+1];
@@ -1265,21 +1269,24 @@ static void ExpandSelectionWords(Thoth_Editor *t,Thoth_EditorCmd *c){
 		int prev = t->cursors[k].pos;
 		t->cursors[k].pos = MoveByWordsFunc(t->file->text, t->file->textLen, t->cursors[k].pos,c->num);
 		
-		if(t->cursors[k].selection.len == 0)
+		if(t->cursors[k].selection.len == 0 || 
+			(t->cursors[k].selection.startCursorPos+t->cursors[k].selection.len < t->cursors[k].pos
+		 && (t->cursors[k].selection.dir < 0)) || 
+			(t->cursors[k].selection.startCursorPos > t->cursors[k].pos && (t->cursors[k].selection.dir >= 0)
+		)){
 			t->cursors[k].selection.startCursorPos = prev;
+			t->cursors[k].selection.dir = c->num;
+		}
 
-		if(t->cursors[k].pos > t->cursors[k].selection.startCursorPos+t->cursors[k].selection.len){
-
-			t->cursors[k].selection.len += t->cursors[k].pos - prev;
-
-		} else if(t->cursors[k].pos < t->cursors[k].selection.startCursorPos) {
-
+		if(t->cursors[k].selection.dir >= 0){
+			t->cursors[k].selection.len = t->cursors[k].pos - t->cursors[k].selection.startCursorPos;
+		} else {
+			
 			t->cursors[k].selection.len += t->cursors[k].selection.startCursorPos - t->cursors[k].pos;
 			t->cursors[k].selection.startCursorPos = t->cursors[k].pos;
 		}
+
 	}
-
-
 	ResolveCursorCollisions(t,0);
 }
 
@@ -1678,8 +1685,8 @@ static int GetBetweenBrackets(char *text, int len, int pos, int *first, int *las
 static void IndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 /*
 	needs saved text for knowing if
-[indent
-	indent]
+	[indent
+		indent]
 
 */
 	LoadCursors(t,c);
@@ -1714,13 +1721,12 @@ static void IndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 		
 		if(!sel->len){
 			sel->startCursorPos = t->cursors[k].pos - 
-					GetCharsIntoLine(t->file->text, t->cursors[k].pos);
+				GetCharsIntoLine(t->file->text, t->cursors[k].pos);
 
 					if(t->file->text[sel->startCursorPos] == '\n')
-				sel->startCursorPos++;
+						sel->startCursorPos++;
 
-					sel->len =
-					GetStartOfNextLine(t->file->text, t->file->textLen, 
+					sel->len =GetStartOfNextLine(t->file->text, t->file->textLen, 
 						sel->startCursorPos) - sel->startCursorPos;
 		}
 
@@ -1755,7 +1761,7 @@ static void IndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 					c->hiddenCursors = (Thoth_EditorCur *)realloc(c->hiddenCursors, sizeof(Thoth_EditorCur) * ++c->nHiddenCursors);
 					Thoth_EditorCur *cur = &c->hiddenCursors[c->nHiddenCursors-1];
 					memset(cur, 0, sizeof(Thoth_EditorCur));
-					cur->pos = next+1;
+					cur->pos = next;
 					t->cursors[k].pos= next+1;
 					cur->savedText = malloc(2);
 					cur->savedText[0] = '\t';
@@ -1997,6 +2003,7 @@ static void ExpandSelectionLines(Thoth_Editor *t, Thoth_EditorCmd *c){
 		if(cursor->selection.len == 0){
 			cursor->selection.startCursorPos = 
 			cursor->pos - GetCharsIntoLine(t->file->text, cursor->pos);
+			if(cursor->pos == cursor->selection.startCursorPos) cursor->pos++;
 		} else {
 			cursor->pos++;
 		}
@@ -2010,11 +2017,6 @@ static void ExpandSelectionLines(Thoth_Editor *t, Thoth_EditorCmd *c){
 		if(cursor->pos > (int)t->file->textLen) cursor->pos = t->file->textLen;
 
 		cursor->selection.len = cursor->pos - cursor->selection.startCursorPos;
-		if(cursor->selection.startCursorPos+cursor->selection.len < 0)
-			cursor->selection.len -= c->num;
-
-		if(cursor->selection.startCursorPos+cursor->selection.len > (int)t->file->textLen)
-			cursor->selection.len -= c->num;
 	}
 }
 
@@ -2146,6 +2148,12 @@ static void Copy(Thoth_Editor *t, Thoth_EditorCmd *c){
 static void Cut(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	UNUSED(c);
+	if(t->cursors[0].selection.len == 0){
+		Thoth_EditorCmd *command = CreateCommand((const unsigned int[]){0}, 
+		0, 1, SCR_CENT, ExpandSelectionLines, NULL);
+		ExecuteCommand(t, command);
+		FreeCommand(command);
+	}
 
 	Thoth_EditorCmd *command = CreateCommand((const unsigned int[]){0}, 0, 1, SCR_CENT, Copy, NULL);
 	ExecuteCommand(t, command);
@@ -2515,8 +2523,6 @@ static void UndoAddCharacters(Thoth_Editor *t, Thoth_EditorCmd *c){
 	for(k = c->nSavedCursors-1; k >= 0; k--){
 		RemoveStrFromText(t, &k, strlen(c->keys));
 		if(k < c->nSavedCursors && c->savedCursors[k].savedText){
-			t->cursors[k].selection.startCursorPos = t->cursors[k].pos;
-			t->cursors[k].selection.len = strlen(c->savedCursors[k].savedText);
 			AddStrToText(t, &k, c->savedCursors[k].savedText);
 		}
 	}
@@ -2525,8 +2531,9 @@ static void UndoAddCharacters(Thoth_Editor *t, Thoth_EditorCmd *c){
 		t->autoCompleteSearchLen -= strlen(c->keys);
 		if(t->autoCompleteSearchLen > 0)
 			AutoComplete(t);
-		else
+		else {
 			t->autoCompleteSearchLen = 0;
+		}
 	}
 
 	SaveCursors(t, c);
@@ -2674,6 +2681,22 @@ static void AddCharacters(Thoth_Editor *t, Thoth_EditorCmd *c){
 				t->autoCompleteSearchLen = 0;
 			}
 		}        
+	}
+
+	if(keys[0] == '}' && t->nCursors == 1){
+		int into = t->cursors[0].pos - GetCharsIntoLine(t->file->text, t->cursors[0].pos);
+		int tabs = 0;
+		int k;
+		for(k = into; k < t->cursors[0].pos; k++, tabs++){
+			if(t->file->text[k] != '\t') break;
+		}
+		if(k == t->cursors[0].pos) {
+			int index = 0;
+			RemoveStrFromText(t,&index,1);
+			t->cursors[0].savedText = malloc(2);
+			t->cursors[0].savedText[0] = '\t';
+			t->cursors[0].savedText[1] = 0;
+		}
 	}
 
 	for(k = 0; k < t->nCursors; k++){
@@ -2999,7 +3022,7 @@ static void FreeFile(Thoth_EditorFile *f){
 	int k;
 	for(k = 0; k < f->sHistory; k++)
 		FreeCommand(f->history[k]);
-
+	if(f->img.xi) X11_DestroyImage(&f->img);	
 	if(f->history) free(f->history);
 	free(f);
 }
@@ -3053,9 +3076,12 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 		strcpy(path, tmp);
 		free(tmp);
 	}
+
 #endif
 
+
 	Thoth_EditorFile *file = CreateTextEditorFile(path);
+
 
 	int exists = -1;
 	if((exists = AddFile(t, file)) >= 0){
@@ -3068,6 +3094,7 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 	}
 
 
+	t->file->text = NULL;
 	FILE *fp = fopen(path, "rb");
 
 	if(!fp){
@@ -3076,6 +3103,19 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 		goto endfile;
 	}
 
+	int ext = strlen(path);
+	for(; ext > 0; --ext){
+		if(path[ext] == '.') break;
+	}
+	if(strcmp(&path[ext], ".png")==0){
+		StartLogging(t, THOTH_LOGMODE_IMAGE);
+		X11_LoadPNG(fp, &t->file->img);
+		return;
+	} else if(strcmp(&path[ext], ".jpg") == 0){
+		StartLogging(t, THOTH_LOGMODE_IMAGE);
+		X11_LoadJPEG(fp, &t->file->img);
+		return;
+	}
 
 	int m;
 	for(m = strlen(path); m > 0; m--){
@@ -3159,26 +3199,25 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	start_color();
 	use_default_colors();
 
-	init_pair(THOTH_COLOR_SIDE_NUMBERS, COLOR_CYAN, -1);
-	init_pair(THOTH_COLOR_NORMAL, COLOR_WHITE, -1);
+	init_pair(THOTH_COLOR_NORMAL, -1, -1);
 	init_pair(THOTH_COLOR_KEYWORD, COLOR_CYAN, -1);
 	init_pair(THOTH_COLOR_COMMENT, -1, -1);
-	init_pair(THOTH_COLOR_TOKEN, COLOR_GREEN, -1);
+	init_pair(THOTH_COLOR_TOKEN,COLOR_GREEN, -1);
 	init_pair(THOTH_COLOR_NUM, COLOR_RED, -1);
 	init_pair(THOTH_COLOR_FUNCTION, COLOR_YELLOW, -1);
 	init_pair(THOTH_COLOR_STRING, COLOR_MAGENTA, -1);
 
-	init_pair(THOTH_COLOR_SELECTED, COLOR_BLACK ,COLOR_CYAN);
+	init_pair(THOTH_COLOR_SELECTED, COLOR_BLACK ,COLOR_GREEN);
 	init_pair(THOTH_COLOR_SELECTED_DIRECTORY, COLOR_RED ,COLOR_CYAN);
 	init_pair(THOTH_COLOR_UNSELECTED_DIRECTORY, COLOR_RED ,COLOR_WHITE);
 	init_pair(THOTH_COLOR_AUTO_COMPLETE, COLOR_BLACK, COLOR_WHITE);
 	init_pair(THOTH_COLOR_LOG_UNSELECTED, COLOR_BLACK, COLOR_WHITE);
-	init_pair(THOTH_COLOR_CURSOR, COLOR_BLACK ,COLOR_MAGENTA);
+	init_pair(THOTH_COLOR_CURSOR,COLOR_BLACK ,COLOR_MAGENTA);
 	init_pair(THOTH_COLOR_FIND, COLOR_BLACK ,COLOR_WHITE);
-	init_pair(THOTH_COLOR_LINE_NUM, -1 ,-1);
-
+	init_pair(THOTH_COLOR_LINE_NUM, COLOR_WHITE ,COLOR_BLACK);
+	init_pair(THOTH_COLOR_LINENUM_CURSOR, COLOR_BLACK ,COLOR_GREEN);
 	init_pair(THOTH_TE_COLOR_BLACK, COLOR_BLACK ,-1);
-	init_pair(THOTH_TE_COLOR_WHITE, COLOR_WHITE ,-1);
+	init_pair(THOTH_TE_COLOR_WHITE, -1 ,-1);
 	init_pair(THOTH_TE_COLOR_CYAN, COLOR_CYAN ,-1);
 	init_pair(THOTH_TE_COLOR_RED, COLOR_RED ,-1);
 	init_pair(THOTH_TE_COLOR_YELLOW, COLOR_YELLOW ,-1);
@@ -3188,8 +3227,8 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 
 	wclear(stdscr);
 	timeout(50);
-#endif
 
+#endif
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_UP] , 0}, "", -1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_DOWN] , 0}, "", 1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
 
@@ -3199,7 +3238,6 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_NewFile]  , 0}, "", 0, SCR_NORM, NewFile, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_CloseFile]  , 0}, "", 0, SCR_NORM, CloseFile, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SwitchFile] , 0}, "", 0, SCR_NORM, SwitchFile, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SaveAsFile]  , 0}, "", 0, SCR_NORM, SaveAsFile, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SaveFile]  , 0}, "", 0, SCR_NORM, SaveFile, NULL));
 
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ToggleComment]  , 0}, "", 0, SCR_NORM, ToggleComment, ToggleComment));
@@ -3240,7 +3278,6 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ScrollScreen_UP] , 0}, "", -1, SCR_CENT, ScrollScreen, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ScrollScreen_DOWN]  , 0}, "", 1, SCR_CENT, ScrollScreen, NULL));
 	
-
 	AddCommand(t, CreateCommand((unsigned int[]){THOTH_ARROW_LEFT  , 0}, "", -1, SCR_NORM, MoveByChars, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){THOTH_ARROW_RIGHT  , 0}, "", 1, SCR_NORM, MoveByChars, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){THOTH_ARROW_UP  , 0}, "", -1, SCR_NORM, MoveLines, NULL));
@@ -3531,6 +3568,16 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 #endif
 
+	if(t->file->img.xi){
+		
+		 X11_DrawImage(&t->file->img,0, 0, t->colsX, t->linesY);
+		wclear(stdscr);
+		wrefresh(stdscr);
+		return;
+	} else {
+		X11_DrawImage(NULL,0,0,0,0);
+	}
+
 	t->logY = 0;
 	t->logX = 5;
 	if(t->logging) t->logY = 1;
@@ -3667,8 +3714,12 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 	Thoth_attron(hdcMem,(THOTH_COLOR_NORMAL));
 	if(t->logging == THOTH_LOGMODE_CONSOLE){
 		int logLen = strlen(t->loggingText);
-		
-#if WINDOWS_COMPILE
+#ifdef LINUX_COMPILE
+		endwin();
+		return;
+
+#endif
+#ifdef WINDOWS_COMPILE
 		// FILE *fp = fopen(THOTH_LOGCOMPILEFILE, "r");
 
 		// if(t->loggingText) free(t->loggingText);
@@ -3684,85 +3735,6 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		// t->loggingText[logLen] = 0;
 		// fclose(fp);
 #endif
-		Thoth_attron(hdcMem,(THOTH_COLOR_NORMAL));
-		y = 0;
-		x = 0;
-
-		int last = 0;
-
-		for(k = 0; k < logLen; k++){
-			if(t->loggingText[k] == 0x1b){ // F
-
-				if(t->loggingText[k+1] == '['){
-					k += 2;
-
-					last = k;
-					// params
-					int params[2] = {-1,-1};
-					int nParams = 0;
-					int lastParam = k;
-					while(k < logLen && t->loggingText[k] >= 0x30 && t->loggingText[k] <= 0x3F){						
-						if(t->loggingText[k] == ';'){
-							t->loggingText[k] = 0;
-							params[nParams++] = atoi(&t->loggingText[lastParam]);
-							t->loggingText[k] = ';';
-							lastParam = k+1;
-						}
-						k++;
-					}
-
-					if(last != k){
-						char tmp = t->loggingText[k];
-						t->loggingText[k] = 0;
-						params[nParams++] = atoi(&t->loggingText[lastParam]);
-						t->loggingText[k] = tmp;
-					}
-					while(k < logLen && t->loggingText[k] >= 0x20 && t->loggingText[k] <= 0x2F){ k++; }
-					last = k;
-					// ending
-
-					if(k < logLen && t->loggingText[k] >= 0x40 && t->loggingText[k] <= 0x7e){ k++; }
-
-					if(t->loggingText[k-1] == 'm'){
-						int m;
-						for(m = 0; m < nParams; m++){
-							
-							if(params[m] >= 30){
-								int ansi = params[m]-30;
-								if(ansi >= 7) ansi = 7;
-								Thoth_attron(hdcMem,(THOTH_TE_COLOR_BLACK + ansi));
-							} 
-						}
-
-						if(nParams == 0){
-							Thoth_attron(hdcMem,(THOTH_TE_COLOR_WHITE));
-						}
-					}
-
-					k--;
-				}
-
-
-				last = k;
-				continue;
-			}
-
-
-			if(x >= t->colsX || t->loggingText[k] == '\n'){
-				last = k;
-				move(y,x);
-				Thoth_clrtoeol(hdcMem);
-
-				y++;
-				x = 0;
-				continue;
-			}
-			Thoth_mvprintw(hdcMem, x, y, &t->loggingText[k], 1);
-			x++;
-		}
-		move(y, 0);
-		Thoth_clrtoeol(hdcMem);
-		t->logY = y;
 	}
 
 	// wrefresh(stdscr);
@@ -4028,7 +4000,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		Thoth_clrtoeol(hdcMem);
 	}
 // draw line numbers
-	Thoth_attron(hdcMem,(THOTH_COLOR_NORMAL));
+	Thoth_attron(hdcMem,(THOTH_COLOR_LINE_NUM));
 	char buffer[10];
 
 	for(y = t->logY, k = 0; y < t->linesY; y++, k++){
@@ -4109,6 +4081,10 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		else{
 			Thoth_mvprintw(hdcMem, t->logX+x, t->logY+y, &text[c->pos], 1);
 		}
+		Thoth_attron(hdcMem,(THOTH_COLOR_LINENUM_CURSOR));		
+		sprintf(buffer, "%.4i", t->file->scroll+y);
+		Thoth_mvprintw(hdcMem, 0, t->logY+y, buffer, strlen(buffer));
+
 	}
 
 	int j;
@@ -4164,8 +4140,6 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 #endif
 }
 
-
-
 void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 
 	if(key == 27){ // escape
@@ -4217,7 +4191,7 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 			t->quit = 1;
 			return;
 		}
-		if(key == ((( unsigned int)'b') | THOTH_CTRL_KEY)){
+		if(key == ((( unsigned int)'b') | THOTH_CTRL_KEY) && t->logging != THOTH_LOGMODE_CONSOLE){
 	
 			if(strlen(t->file->path) > 0){
 				FILE *fp = fopen(t->file->path, "wb");
@@ -4230,50 +4204,33 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 			t->loggingText = malloc(strlen(buffer)+1);
 			memcpy(t->loggingText, buffer, strlen(buffer));
 			t->loggingText[strlen(buffer)] = 0;
-
+			
 			StartLogging(t, THOTH_LOGMODE_CONSOLE);
 
 #ifdef LINUX_COMPILE
 	
-		
-			openpty(&t->ttyMaster, &t->ttySlave, NULL, NULL, NULL);
+			endwin();
+			chdir(t->fileBrowser.directory);
+			// char *logpath = THOTH_LOGCOMPILEFILE;
+		    char cmdbuffer[512]; 
+			printf("\033[H\033[2J");
+		    sprintf(cmdbuffer, "%s",t->cfg->makecmd);
 
-			t->_stderr = dup(STDERR_FILENO);
-			t->_stdout = dup(STDOUT_FILENO);
-			dup2(t->ttySlave, STDERR_FILENO);
-			dup2(t->ttySlave, STDOUT_FILENO);
+		    if(t->loggingText) free(t->loggingText);
+		    t->loggingText = NULL;
 
-			t->ttyPid = fork();
-			if (t->ttyPid == 0) {
-				chdir(t->fileBrowser.directory);
-				char *args[] = {"make",NULL};
-				char *args2[] = {NULL};
-				execvp(args[0], args2);
-			}
-			int logLen = strlen(t->loggingText);
-			fd_set rfds;
+		    FILE *fp = popen(cmdbuffer, "r");
+		    int len = 0;
+			  while (fgets(cmdbuffer, 512, fp) != NULL) {
+			      printf("%s", cmdbuffer);
 
-			wait(NULL);
-			FD_ZERO(&rfds);
-			FD_SET(t->ttyMaster, &rfds);
-			int size = 0;
-			char buf[4097];
-		  size = read(t->ttyMaster, buf, 4096);
+			      int bufferLen = strlen(cmdbuffer);
+			      t->loggingText = realloc(t->loggingText, len+bufferLen+1);
+			      memcpy(&t->loggingText[len], cmdbuffer, bufferLen);
+			      len += bufferLen;
+					t->loggingText[len] = 0;
 
-		  t->loggingText = realloc(t->loggingText, 
-			logLen+size+1);
-		  memcpy(&t->loggingText[logLen], buf, size);
-
-		  logLen += size;
-		  t->loggingText[logLen] = 0;
-			
-			fsync(STDERR_FILENO);
-			fsync(STDOUT_FILENO);
-			dup2(t->_stderr, STDERR_FILENO);
-			dup2(t->_stdout, STDOUT_FILENO);
-			close(t->ttyMaster);
-			close(t->ttySlave);
-
+			  }
 #endif
 #ifdef WINDOWS_COMPILE
 		

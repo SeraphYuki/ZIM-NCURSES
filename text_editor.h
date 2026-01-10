@@ -6,6 +6,7 @@
 #endif
 #include "types.h"
 #include "config.h"
+#include "x11.h"
 #include "file_browser.h"
 
 #define THOTH_CTRL_KEY    (unsigned int)0x100
@@ -36,24 +37,25 @@
 // // { "keys": ["shift+alt+ctrl+l"], "command": "move", "args": {"extend": true, "by": "word_ends", "forward": true} },
 
  enum {
-  THOTH_LOGMODE_NUM = 1,
-  THOTH_LOGMODE_TEXT,
-  THOTH_LOGMODE_TEXT_INSENSITIVE,
-  THOTH_LOGMODE_SAVE,
-  THOTH_LOGMODE_OPEN,
-  THOTH_LOGMODE_HELP,
-  THOTH_LOGMODE_SWITCH_FILE,
-  THOTH_LOGMODE_FILEBROWSER,
-  THOTH_LOGMODE_MODES_INPUTLESS,
-  THOTH_LOGMODE_ALERT,
-  THOTH_LOGMODE_CONSOLE,
+	THOTH_LOGMODE_NUM = 1,
+	THOTH_LOGMODE_TEXT,
+	THOTH_LOGMODE_TEXT_INSENSITIVE,
+	THOTH_LOGMODE_SAVE,
+	THOTH_LOGMODE_OPEN,
+	THOTH_LOGMODE_HELP,
+	THOTH_LOGMODE_SWITCH_FILE,
+	THOTH_LOGMODE_FILEBROWSER,
+	THOTH_LOGMODE_MODES_INPUTLESS,
+	THOTH_LOGMODE_ALERT,
+	THOTH_LOGMODE_CONSOLE,
+	THOTH_LOGMODE_IMAGE,
  };
 
  typedef struct {
 
   int startCursorPos;
-  int len;
-
+	int len;
+	int dir;
  } Thoth_EditorSelection;
 
 
@@ -64,94 +66,94 @@
  struct Thoth_EditorCmd {
 
   unsigned int keyBinding[8];
-  char *keys;
-  int num;
-  unsigned char scroll;
-  
-  Thoth_EditorCur *savedCursors;
-  int nSavedCursors;
-  Thoth_EditorCur *hiddenCursors;
-  int nHiddenCursors;
-  void (*Execute)(Thoth_Editor *, Thoth_EditorCmd *c);
-  void (*Undo)(Thoth_Editor *, Thoth_EditorCmd *c);
+	char *keys;
+	int num;
+	unsigned char scroll;
+	
+	Thoth_EditorCur *savedCursors;
+	int nSavedCursors;
+	Thoth_EditorCur *hiddenCursors;
+	int nHiddenCursors;
+	void (*Execute)(Thoth_Editor *, Thoth_EditorCmd *c);
+	void (*Undo)(Thoth_Editor *, Thoth_EditorCmd *c);
  };
 
  struct Thoth_EditorCur {
 
 
-  Thoth_EditorSelection selection;
+	Thoth_EditorSelection selection;
 
   //no longer used, now clipboard is from system, lines seperated by \n
-  int hiddenIndex;
-  char *clipboard;
-  int sClipboard;
-  char *savedText;
-  int addedLen;
-  int pos;
+	int hiddenIndex;
+	char *clipboard;
+	int sClipboard;
+	char *savedText;
+	int addedLen;
+	int pos;
  };
 
 #define THOTH_MAX_AUTO_COMPLETE_STRLEN 35
 #define THOTH_MAX_AUTO_COMPLETE 20
 
 typedef struct {
-  int offset;
-  int len;
+	int offset;
+	int len;
 } Thoth_AutoCompleteOffset;
 
 typedef struct {
-  char                    *text;
-  int                     scroll;
-  int                     unsaved;
-  int                     cursorPos;
-  int                     historyPos;
-  Thoth_EditorCmd       **history;
-  int                     sHistory;
+	char                    *text;
+	int                     scroll;
+	int                     unsaved;
+	int                     cursorPos;
+	int                     historyPos;
+	Thoth_EditorCmd       **history;
+	int                     sHistory;
 
-
-  int                     textLen;
-  char                    name[MAX_FILENAME];
-  char                    path[MAX_PATH_LEN];
+	Image 				  img;
+	int                     textLen;
+	char                    name[MAX_FILENAME];
+	char                    path[MAX_PATH_LEN];
 } Thoth_EditorFile;
 
  struct Thoth_Editor {
 
   Thoth_Config            *cfg;
-  Thoth_EditorCmd       **commands;
-  Thoth_AutoCompleteOffset      autoComplete[THOTH_MAX_AUTO_COMPLETE];
-  Thoth_EditorCur        *cursors;
-  Thoth_EditorFile          **files;
-  Thoth_EditorFile          *file;
-  Thoth_FileBrowser       fileBrowser;
-  Thoth_EditorCmd         **lastCmd;  
+	Thoth_EditorCmd       **commands;
+	Thoth_AutoCompleteOffset      autoComplete[THOTH_MAX_AUTO_COMPLETE];
+	Thoth_EditorCur        *cursors;
+	Thoth_EditorFile          **files;
+	Thoth_EditorFile          *file;
+	Thoth_FileBrowser       fileBrowser;
+	Thoth_EditorCmd         **lastCmd;  
 
   int                     linesY;
-  int                     colsX;
-  int                     nCommands;
-  int                     selectNextWordTerminator; // "select" not get it in the phrase selecting
+	int                     colsX;
+	int                     nCommands;
+	int                     selectNextWordTerminator; // "select" not get it in the phrase selecting
 
   int                     autoCompleteSearchLen;
-  int                     autoCompleteLen;
-  int                     autoCompleteIndex;
+	int                     autoCompleteLen;
+	int                     autoCompleteIndex;
 
   int                     logging;
-  int                     logIndex;
-  char                    *loggingText;
+	int                     logIndex;
+	char                    *loggingText;
 
   int                     nFiles;
 
   int                     mouseSelection;
-  int                     nCursors;
-  int                     logX;
-  int                     logY;
+	int                     nCursors;
+	int                     logX;
+	int                     logY;
 
   int                     quit;
 
   int                     ttyPid;
-  int                     ttyMaster;
-  int                     ttySlave;
-  int                     _stdout;
-  int                     _stderr;
-  char        *clipboard; 
+	int                     ttyMaster;
+	int                     ttySlave;
+	int                     _stdout;
+	int                     _stderr;
+	char        *clipboard; 
 };
 
 

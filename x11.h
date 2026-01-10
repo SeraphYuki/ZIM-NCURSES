@@ -9,6 +9,18 @@
 #define X11_SUPER_KEY KEY_MAX+3
 #define X11_NUM_OF_RET_KEYS 32*8
 
+typedef struct {
+	XImage *xi;
+	char *pixels;
+	int width;
+	int height;
+	int channels;
+} Image;
+
+void X11_DestroyImage(Image *img);
+int X11_LoadJPEG(FILE *fp, Image *image);
+int X11_LoadPNG(FILE *fp, Image *image);
+void X11_DrawImage(Image *image,int xPos, int yPos, int drawWidth, int drawHeight);
 void X11_WithdrawWindow();
 XIC X11_GetIC();
 Display *X11_GetDisplay();
