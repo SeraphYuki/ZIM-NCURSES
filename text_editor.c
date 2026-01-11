@@ -361,8 +361,6 @@ static void UpdateScrollCenter(Thoth_Editor *t){
 	t->file->scroll = nLinesToCursor  - (t->linesY/2);
 
 	if(t->file->scroll < 0) t->file->scroll = 0;
-
-	
 }
 
 static void ScrollToLine(Thoth_Editor *t){
@@ -2672,10 +2670,13 @@ static void LoggingPaste(Thoth_Editor *t){
 #ifdef LINUX_COMPILE
 	X11_Paste(&t->clipboard);
 #endif
-	int k;
-	for(k = 0; k < strlen(t->clipboard); k++){
-		if(t->clipboard[k] == '\n') break;
-		LoggingAddCharacter(t, t->clipboard[k]);
+	if(t->clipboard){
+		
+		int k;
+		for(k = 0; k < strlen(t->clipboard); k++){
+			if(t->clipboard[k] == '\n') break;
+			LoggingAddCharacter(t, t->clipboard[k]);
+		}
 	}
 }
 
@@ -3077,7 +3078,6 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 		t->file->cursorPos = t->cursors[0].pos;
 
 	if(pathRel == NULL){
-
 		t->file = CreateTextEditorFile(NULL);
 		t->file->text = malloc(1);
 		t->file->text[0] = 0;

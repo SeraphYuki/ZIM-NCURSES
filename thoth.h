@@ -28,7 +28,7 @@ void Thoth_Render(Thoth_t *t);
 void Thoth_Resize(Thoth_t *t, int x, int y, int w, int h);
 #ifdef LIBRARY_COMPILE
 #define THOTH_CONFIG_FILE "zimconfig.cfg"
-#define THOTH_LOGFILE "zimproject.god"
+#define THOTH_LOGFILE "zimproject.zim"
 #define THOTH_LOGCOMPILEFILE "zimlog.txt"
 #else
 #ifdef LINUX_COMPILE
