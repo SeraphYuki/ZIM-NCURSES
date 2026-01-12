@@ -29,6 +29,7 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	strcpy(cfg->makecmd, "mingw32-make");
 	#endif
 
+
 	cfg->keybinds[THOTH_MoveLinesText_UP] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|THOTH_ARROW_UP;
 	cfg->keybinds[THOTH_MoveLinesText_DOWN] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|THOTH_ARROW_DOWN;
 	cfg->keybinds[THOTH_OpenFileBrowser] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'o';
@@ -152,25 +153,25 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 			if(strcmp(lineType, "MakeCMD") == 0)
 			    fscanf(fp, "%s", cfg->makecmd);
 			else if(strcmp(lineType, "COLOR_CYAN") == 0)
-			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_CYAN-1].r, &defaultColors[THOTH_COLOR_CYAN-1].g, &defaultColors[THOTH_COLOR_CYAN-1].b);
+			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_CYAN].r, &defaultColors[THOTH_COLOR_CYAN].g, &defaultColors[THOTH_COLOR_CYAN].b);
 			else if(strcmp(lineType, "COLOR_RED") == 0)
-			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_RED-1].r, &defaultColors[THOTH_COLOR_RED-1].g, &defaultColors[THOTH_COLOR_RED-1].b);
+			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_RED].r, &defaultColors[THOTH_COLOR_RED].g, &defaultColors[THOTH_COLOR_RED].b);
 			else if(strcmp(lineType, "COLOR_YELLOW") == 0)
-			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_YELLOW-1].r, &defaultColors[THOTH_COLOR_YELLOW-1].g, &defaultColors[THOTH_COLOR_YELLOW-1].b);
+			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_YELLOW].r, &defaultColors[THOTH_COLOR_YELLOW].g, &defaultColors[THOTH_COLOR_YELLOW].b);
 			else if(strcmp(lineType, "COLOR_BLUE") == 0)
-			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_BLUE-1].r, &defaultColors[THOTH_COLOR_BLUE-1].g, &defaultColors[THOTH_COLOR_BLUE-1].b);
+			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_BLUE].r, &defaultColors[THOTH_COLOR_BLUE].g, &defaultColors[THOTH_COLOR_BLUE].b);
 			else if(strcmp(lineType, "COLOR_GREEN") == 0)
-			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_GREEN-1].r, &defaultColors[THOTH_COLOR_GREEN-1].g, &defaultColors[THOTH_COLOR_GREEN-1].b);
+			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_GREEN].r, &defaultColors[THOTH_COLOR_GREEN].g, &defaultColors[THOTH_COLOR_GREEN].b);
 			else if(strcmp(lineType, "COLOR_MAGENTA") == 0)
-			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_MAGENTA-1].r, &defaultColors[THOTH_COLOR_MAGENTA-1].g, &defaultColors[THOTH_COLOR_MAGENTA-1].b);
+			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_MAGENTA].r, &defaultColors[THOTH_COLOR_MAGENTA].g, &defaultColors[THOTH_COLOR_MAGENTA].b);
 			else if(strcmp(lineType, "COLOR_WHITE") == 0)
-			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_WHITE-1].r, &defaultColors[THOTH_COLOR_WHITE-1].g, &defaultColors[THOTH_COLOR_WHITE-1].b);
+			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_WHITE].r, &defaultColors[THOTH_COLOR_WHITE].g, &defaultColors[THOTH_COLOR_WHITE].b);
 			else if(strcmp(lineType, "COLOR_BLACK") == 0)
-			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_BLACK-1].r, &defaultColors[THOTH_COLOR_BLACK-1].g, &defaultColors[THOTH_COLOR_BLACK-1].b);
+			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_BLACK].r, &defaultColors[THOTH_COLOR_BLACK].g, &defaultColors[THOTH_COLOR_BLACK].b);
 			else if(strcmp(lineType, "COLOR_GREY") == 0)
-			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_GREY-1].r, &defaultColors[THOTH_COLOR_GREY-1].g, &defaultColors[THOTH_COLOR_GREY-1].b);
+			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_GREY].r, &defaultColors[THOTH_COLOR_GREY].g, &defaultColors[THOTH_COLOR_GREY].b);
 			else if(strcmp(lineType, "COLOR_BG") == 0)
-			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_BG-1].r, &defaultColors[THOTH_COLOR_BG-1].g, &defaultColors[THOTH_COLOR_BG-1].b);
+			    fscanf(fp, "%x %x %x", &defaultColors[THOTH_COLOR_BG].r, &defaultColors[THOTH_COLOR_BG].g, &defaultColors[THOTH_COLOR_BG].b);
 			else if(strcmp(lineType, "MoveLinesText_UP") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_MoveLinesText_UP]);
 			else if(strcmp(lineType, "MoveLinesText_DOWN") == 0)
@@ -259,10 +260,10 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	}
 
 	int k;
-	for(k = 0; k < THOTH_NUM_COLORS-1; k++){
-		cfg->colors[k].r = defaultColors[k].r / 255.0f;
-		cfg->colors[k].g = defaultColors[k].g / 255.0f;
-		cfg->colors[k].b = defaultColors[k].b / 255.0f;
+	for(k = 0; k < THOTH_NUM_COLORS; k++){
+		cfg->colors[k].r = defaultColors[k].r*1000/255;
+		cfg->colors[k].g = defaultColors[k].g*1000/255;
+		cfg->colors[k].b = defaultColors[k].b*1000/255;
 	}
 
 }

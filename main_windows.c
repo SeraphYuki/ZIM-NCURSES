@@ -140,6 +140,7 @@ int Config_GetColor(int index){
 	  return ((colors[colorIndex[index]] & 0xFF0000) >> 16) |(colors[colorIndex[index]] & 0x00FF00) |
 	         ((colors[colorIndex[index]] & 0x0000FF) << 16);
 }
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, int nCmdShow){
 
     WNDCLASSW wc = {

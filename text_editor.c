@@ -39,6 +39,7 @@ enum {
 #define UNUSED(x) (void)(x)
 #endif
 
+
 static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void PutsCursor(Thoth_EditorCur c);
@@ -224,6 +225,7 @@ static void StartLogging(Thoth_Editor *t, int mode){
 static void EndLogging(Thoth_Editor *t){
 	t->logIndex = -1;
 #ifdef LINUX_COMPILE
+		bkgd(COLOR_PAIR(THOTH_COLOR_NORMAL));	
 		wclear(stdscr);
 #endif
 	if(t->loggingText) free(t->loggingText);
@@ -2930,7 +2932,6 @@ static void RemoveExtraCursors(Thoth_Editor *t){
 
 static void ExecuteCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 
-
 	if(c->Undo == NULL || t->logging){
 		t->lastCmd = NULL;
 		c->Execute(t, c);
@@ -2972,7 +2973,7 @@ static void ExecuteCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 	for(k = 0; k < BufferExpandFuncsLen; k++){
 		if(BufferExpandFuncs[k] == c->Execute
 			&& t->lastCmd && (*t->lastCmd)->Execute == BufferExpandFuncs[k]
-			 && (!c->keys || ( c->keys && !IsToken(c->keys[0]) && 
+			 && ( ( c->keys && !IsToken(c->keys[0]) && 
 			 lastKeys && !IsToken((*lastKeys)[lastLen-1]))))
 			{
 			if(c->keys){
@@ -3038,7 +3039,9 @@ static void FreeFile(Thoth_EditorFile *f){
 	int k;
 	for(k = 0; k < f->sHistory; k++)
 		FreeCommand(f->history[k]);
+#ifdef LINUX_COMPILE
 	if(f->img.pixels) X11_DestroyImage(&f->img);	
+#endif
 	if(f->history) free(f->history);
 	free(f);
 }
@@ -3123,6 +3126,7 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 	for(; ext > 0; --ext){
 		if(path[ext] == '.') break;
 	}
+#ifdef LINUX_COMPILE
 	if(strcmp(&path[ext], ".png")==0){
 		StartLogging(t, THOTH_LOGMODE_IMAGE);
 		X11_LoadPNG(fp, &t->file->img);
@@ -3132,7 +3136,7 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 		X11_LoadJPEG(fp, &t->file->img);
 		return;
 	}
-
+#endif
 	int m;
 	for(m = strlen(path); m > 0; m--){
 #ifdef WINDOWS_COMPILE
@@ -3217,7 +3221,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 
 	init_pair(THOTH_COLOR_NORMAL, -1, -1);
 	init_pair(THOTH_COLOR_KEYWORD, COLOR_CYAN, -1);
-	init_pair(THOTH_COLOR_COMMENT, -1, -1);
+	init_pair(THOTH_COLOR_COMMENT, COLOR_WHITE, -1);
 	init_pair(THOTH_COLOR_TOKEN,COLOR_GREEN, -1);
 	init_pair(THOTH_COLOR_NUM, COLOR_RED, -1);
 	init_pair(THOTH_COLOR_FUNCTION, COLOR_YELLOW, -1);
@@ -3241,7 +3245,8 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	init_pair(THOTH_TE_COLOR_GREEN, COLOR_GREEN ,-1);
 	init_pair(THOTH_TE_COLOR_MAGENTA, COLOR_MAGENTA ,-1);
 
-	wclear(stdscr);
+	bkgd(COLOR_PAIR(THOTH_COLOR_NORMAL));	
+	clear();
 	timeout(50);
 
 #endif
@@ -3581,10 +3586,11 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 	t->colsX = COLS;
 	Thoth_attron(hdcMem, THOTH_COLOR_NORMAL);
 
-#endif
+
 
 	if(t->file->img.pixels){
 		X11_DrawImage(&t->file->img,0, 0, t->colsX, t->linesY);
+		bkgd(COLOR_PAIR(THOTH_COLOR_NORMAL));	
 		wclear(stdscr);
 		wrefresh(stdscr);
 		return;
@@ -3592,6 +3598,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		X11_DrawImage(NULL,0,0,0,0);
 	}
 
+#endif
 	t->logY = 0;
 	t->logX = 5;
 	if(t->logging) t->logY = 1;
@@ -3656,7 +3663,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					"ctrl+shift+arrow up/down (move line up/down) (moves the entire line the cursors on, or every line in the selection by a line)\n"
 					"ctrl+o (open file)\n"
 					"ctrl+shift+o (file browser)\n"
-					"ctrl+s (save file)\n"
+					"ctrl+s (save file) (ctrl+o to change directory then cancel and save)\n"
 					"ctrl+shift+s Save As file\n"
 					"ctrl+n New file\n"
 					"ctrl+p Switch file, (lists open files)\n"
@@ -4013,7 +4020,11 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		Thoth_clrtoeol(hdcMem);
 	}
 // draw line numbers
+#ifdef LINUX_COMPILE
 	Thoth_attron(hdcMem,(THOTH_COLOR_LINE_NUM));
+#else
+		Thoth_attron(hdcMem,(THOTH_COLOR_NORMAL));
+#endif
 	char buffer[10];
 
 	for(y = t->logY, k = 0; y < t->linesY; y++, k++){
@@ -4091,7 +4102,11 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		else{
 			Thoth_mvprintw(hdcMem, t->logX+x, t->logY+y, &text[c->pos], 1);
 		}
+#ifdef LINUX_COMPILE
 		Thoth_attron(hdcMem,(THOTH_COLOR_LINENUM_CURSOR));		
+#else
+		Thoth_attron(hdcMem,(THOTH_COLOR_SELECTED));		
+#endif
 		sprintf(buffer, "%.4i", t->file->scroll+y);
 		Thoth_mvprintw(hdcMem, 0, t->logY+y, buffer, strlen(buffer));
 

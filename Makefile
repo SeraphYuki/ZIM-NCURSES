@@ -1,39 +1,24 @@
 # # linuxa
-CC=gcc
-EXECUTABLE=zim
-CFLAGS = -g -Wall -lm -DLINUX_COMPILE -DLINUX_INSTALL
+#CC=gcc
+#EXECUTABLE=zim
+#CFLAGS = -g -Wall -lm -DLINUX_COMPILE -DLINUX_INSTALL
+#LIBS = -lncurses  $(shell pkg-config --libs x11) -lpng -ljpeg -lz
+#LDLIBS = -lm -static-libgcc $(LIBS)
+#SOURCES=main.c \
+#text_editor.c log.c file_browser.c config.c x11.c
 
-LIBS = -lncurses  $(shell pkg-config --libs x11) -lpng -ljpeg -lz
 
+CC = i686-w64-mingw32-gcc
+EXECUTABLE=zim.exe
+ CFLAGS = -g -Wall -lm -DWINDOWS -DWINDOWS_INSTALL  -DWINDOWS_COMPILE -I/usr/i686-w64-mingw32/usr/include
+LIBS = -lmingw32 -lkernel32 -luser32 -lgdi32  -mwindows -lncurses
+EXECUTABLE=zim.exe
+CFLAGS = -g  -lm -DWINDOWS -DWINDOWS_INSTALL  -DWINDOWS_COMPILE 
+LIBS = -lmingw32 -lkernel32 -luser32 -lgdi32  -mwindows
 LDLIBS = -lm -static-libgcc $(LIBS)
-
-
-SOURCES=main.c \
-text_editor.c log.c file_browser.c config.c x11.c
-
-
-#CC = mingw32-gcc
-
-#EXECUTABLE_WINDOWS=zim.exe
-# CFLAGS_WINDOWS = -g -Wall -lm -DWINDOWS -DWINDOWS_INSTALL  -DWINDOWS_COMPILE -I/usr/x86_64-w64-mingw32/usr/include
-#
-#LIBS_WINDOWS = -lmingw32 -lkernel32 -luser32 -lgdi32  -mwindows -lncurses
-#
-#EXECUTABLE=zim.exe
-#CFLAGS_WINDOWS = -g  -lm -DWINDOWS -DWINDOWS_INSTALL  -DWINDOWS_COMPILE 
-#
-# LIBS = -lmingw32 -lkernel32 -luser32 -lgdi32 -m64  -mwindows
-#
-# LDLIBS = -lm -static-libgcc $(LIBS)
-#
-#LDLIBS_WINDOWS = -lm -static-libgcc $(LIBS_WINDOWS)
-## add -pg for gdb
-#
-#
-#SOURCES_WINDOWS=main_windows.c text_editor.c log.c file_browser.c config.c 
+SOURCES=main.c text_editor.c log.c file_browser.c config.c 
 
 OBJECTS=$(SOURCES:.c=.o)
-
 
 #windows: $(SOURCES_WINDOWS) $(EXECUTABLE_WINDOWS)
 

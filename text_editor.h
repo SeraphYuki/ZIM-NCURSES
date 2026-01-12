@@ -6,7 +6,9 @@
 #endif
 #include "types.h"
 #include "config.h"
+#ifdef LINUX_COMPILE
 #include "x11.h"
+#endif
 #include "file_browser.h"
 
 #define THOTH_CTRL_KEY    (unsigned int)0x100
@@ -108,8 +110,9 @@ typedef struct {
 	int                     historyPos;
 	Thoth_EditorCmd       **history;
 	int                     sHistory;
-
+#ifdef LINUX_COMPILE
 	Image 				  img;
+#endif
 	int                     textLen;
 	char                    name[MAX_FILENAME];
 	char                    path[MAX_PATH_LEN];
