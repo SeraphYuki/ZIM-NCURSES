@@ -16,7 +16,7 @@ typedef struct {
 
 } Thoth_t;
 #ifdef WINDOWS_COMPILE
-int Config_GetColor(int index);
+int Config_GetColor(int index, int pair);
 HFONT Config_GetFont();
 int Config_GetWidth();
 int Config_GetHeight();

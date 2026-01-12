@@ -72,31 +72,31 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->keybinds[THOTH_Copy] = 	'c'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_Paste] ='v'|THOTH_CTRL_KEY;
 
-	memcpy(&cfg->colorPairs[THOTH_COLOR_SIDE_NUMBERS-1], (int[]){ THOTH_COLOR_WHITE, THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_NORMAL-1], (int[]){ THOTH_COLOR_WHITE, THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_KEYWORD-1], (int[]){ THOTH_COLOR_CYAN, THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_COMMENT-1], (int[]){ THOTH_COLOR_GREY, THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_TOKEN-1], (int[]){ THOTH_COLOR_BLUE, THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_NUM-1], (int[]){ THOTH_COLOR_RED, THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_FUNCTION-1], (int[]){ THOTH_COLOR_YELLOW, THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_STRING-1], (int[]){ THOTH_COLOR_MAGENTA, THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_SELECTED-1], (int[]){ THOTH_COLOR_BLACK ,THOTH_COLOR_CYAN }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_SELECTED_DIRECTORY-1], (int[]){ THOTH_COLOR_RED ,THOTH_COLOR_CYAN }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_UNSELECTED_DIRECTORY-1], (int[]){ THOTH_COLOR_RED ,THOTH_COLOR_WHITE }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_AUTO_COMPLETE-1], (int[]){ THOTH_COLOR_BLACK, THOTH_COLOR_WHITE }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_LOG_UNSELECTED-1], (int[]){ THOTH_COLOR_BLACK, THOTH_COLOR_WHITE }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_CURSOR-1], (int[]){ THOTH_COLOR_BLACK ,THOTH_COLOR_MAGENTA }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_FIND-1], (int[]){ THOTH_COLOR_BLACK ,THOTH_COLOR_WHITE }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_COLOR_LINE_NUM-1], (int[]){ THOTH_COLOR_GREY ,THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_BLACK-1], (int[]){ THOTH_COLOR_BLACK ,THOTH_COLOR_WHITE }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_WHITE-1], (int[]){ THOTH_COLOR_WHITE ,THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_CYAN-1], (int[]){ THOTH_COLOR_CYAN ,THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_RED-1], (int[]){ THOTH_COLOR_RED ,THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_YELLOW-1], (int[]){ THOTH_COLOR_YELLOW ,THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_BLUE-1], (int[]){ THOTH_COLOR_BLUE ,THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_GREEN-1], (int[]){ THOTH_COLOR_GREEN ,THOTH_COLOR_BLACK }, sizeof(int)*2);
-	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_MAGENTA-1], (int[]){ THOTH_COLOR_MAGENTA ,THOTH_COLOR_BLACK }, sizeof(int)*2);
-
+	memcpy(&cfg->colorPairs[THOTH_COLOR_SIDE_NUMBERS], (int[]){ THOTH_COLOR_WHITE, THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_NORMAL], (int[]){ THOTH_COLOR_WHITE, THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_KEYWORD], (int[]){ THOTH_COLOR_CYAN, THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_COMMENT], (int[]){ THOTH_COLOR_GREY, THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_TOKEN], (int[]){ THOTH_COLOR_GREEN, THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_NUM], (int[]){ THOTH_COLOR_RED, THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_FUNCTION], (int[]){ THOTH_COLOR_YELLOW, THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_STRING], (int[]){ THOTH_COLOR_MAGENTA, THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_SELECTED], (int[]){ THOTH_COLOR_BLACK ,THOTH_COLOR_GREEN }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_SELECTED_DIRECTORY], (int[]){ THOTH_COLOR_RED ,THOTH_COLOR_CYAN }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_UNSELECTED_DIRECTORY], (int[]){ THOTH_COLOR_RED ,THOTH_COLOR_WHITE }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_AUTO_COMPLETE], (int[]){ THOTH_COLOR_BLACK, THOTH_COLOR_WHITE }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_LOG_UNSELECTED], (int[]){ THOTH_COLOR_BLACK, THOTH_COLOR_WHITE }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_CURSOR], (int[]){ THOTH_COLOR_BLACK ,THOTH_COLOR_MAGENTA }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_FIND], (int[]){ THOTH_COLOR_BLACK ,THOTH_COLOR_WHITE }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_LINE_NUM], (int[]){ THOTH_COLOR_WHITE ,THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_COLOR_LINENUM_CURSOR], (int[]){ THOTH_COLOR_GREEN ,THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_BLACK], (int[]){ THOTH_COLOR_BLACK ,THOTH_COLOR_WHITE }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_WHITE], (int[]){ THOTH_COLOR_WHITE ,THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_CYAN], (int[]){ THOTH_COLOR_CYAN ,THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_RED], (int[]){ THOTH_COLOR_RED ,THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_YELLOW], (int[]){ THOTH_COLOR_YELLOW ,THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_BLUE], (int[]){ THOTH_COLOR_BLUE ,THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_GREEN], (int[]){ THOTH_COLOR_GREEN ,THOTH_COLOR_BLACK }, sizeof(int)*2);
+	memcpy(&cfg->colorPairs[THOTH_TE_COLOR_MAGENTA], (int[]){ THOTH_COLOR_MAGENTA ,THOTH_COLOR_BLACK }, sizeof(int)*2);
 
 	cfg->tabs = DEFAULT_TAB_WIDTH;
 
@@ -261,9 +261,16 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 
 	int k;
 	for(k = 0; k < THOTH_NUM_COLORS; k++){
+	#ifdef WINDOWS_COMPILE
+		cfg->colors[k].r = (int)defaultColors[k].r << 16;
+		cfg->colors[k].g = (int)defaultColors[k].g << 8;
+		cfg->colors[k].b = defaultColors[k].b & 0xFF;
+	#else
 		cfg->colors[k].r = defaultColors[k].r*1000/255;
 		cfg->colors[k].g = defaultColors[k].g*1000/255;
 		cfg->colors[k].b = defaultColors[k].b*1000/255;
+
+	#endif
 	}
 
 }

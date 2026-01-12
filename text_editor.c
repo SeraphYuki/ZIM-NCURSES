@@ -3534,24 +3534,8 @@ void move(int x, int y){
 void Thoth_clrtoeol(HDC hdcMem){
 }
 void Thoth_attron(HDC hdcMem, int color){
-	  if(color == THOTH_COLOR_UNSELECTED_DIRECTORY || color == THOTH_COLOR_LOG_UNSELECTED
-	  	|| color == THOTH_COLOR_FIND || color == THOTH_COLOR_AUTO_COMPLETE){
-	    SetTextColor(hdcMem, (COLORREF){Config_GetColor(0)});
-	    SetBkColor(hdcMem, (COLORREF){Config_GetColor(1)});
-	  } else if(color == THOTH_COLOR_SELECTED_DIRECTORY){
-	    SetTextColor(hdcMem, (COLORREF){Config_GetColor(2)});
-	    SetBkColor(hdcMem, (COLORREF){Config_GetColor(3)});
-	  } else if(color == THOTH_COLOR_SELECTED){
-	    SetTextColor(hdcMem, (COLORREF){Config_GetColor(0)});
-	    SetBkColor(hdcMem, (COLORREF){Config_GetColor(3)});
-	} else if(color == THOTH_COLOR_CURSOR){
-	    SetTextColor(hdcMem, (COLORREF){Config_GetColor(0)});
-	    SetBkColor(hdcMem, (COLORREF){Config_GetColor(1)});
-	} else{
-	    SetTextColor(hdcMem, (COLORREF){Config_GetColor(color)});
-	    SetBkColor(hdcMem, (COLORREF){Config_GetColor(0)});
-
-    }
+	  SetTextColor(hdcMem, (COLORREF){Config_GetColor(color, 0)});
+	  SetBkColor(hdcMem, (COLORREF){Config_GetColor(color, 1)});
 }
 #endif
 #ifdef WINDOWS_COMPILE
@@ -3566,7 +3550,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t,HWND hwnd){
 
 	RECT cliRect;
 	GetClientRect(hwnd, &cliRect);
-	HBRUSH winBgColorBrush = CreateSolidBrush((COLORREF){Config_GetColor(0)});
+	HBRUSH winBgColorBrush = CreateSolidBrush((COLORREF){Config_GetColor(THOTH_COLOR_NORMAL,1)});
 	HBITMAP hbmMem = CreateCompatibleBitmap(ps.hdc,cliRect.right - cliRect.left, cliRect.bottom-cliRect.top );
 	HBITMAP hbmOld = SelectObject(hdcMem, hbmMem);
 	FillRect(hdcMem, &cliRect, winBgColorBrush);
@@ -4023,7 +4007,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 #ifdef LINUX_COMPILE
 	Thoth_attron(hdcMem,(THOTH_COLOR_LINE_NUM));
 #else
-		Thoth_attron(hdcMem,(THOTH_COLOR_NORMAL));
+		Thoth_attron(hdcMem,(THOTH_COLOR_LINE_NUM));
 #endif
 	char buffer[10];
 
