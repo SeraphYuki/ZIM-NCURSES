@@ -98,19 +98,6 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 
 
 	cfg->tabs = DEFAULT_TAB_WIDTH;
-//gruvbox
-//aurora
-
-//{0xa1/255.0f,0xef/255.0f,0xe4/255.0f}, //cyan
-//{0xff/255.0f,0x58/255.0f,0x74/255.0f}, //red
-//{0xec/255.0f,0xc4/255.0f,0x8d/255.0f}, //yellow
-//{0x82/255.0f,0xaa/255.0f,0xf0/255.0f}, //blue
-//{0xad/255.0f,0xdb/255.0f,0x67/255.0f}, //green
-//{0xbd/255.0f,0x93/255.0f,0xf3/255.0f}, //magenta
-//{0xd6/255.0f,0xde/255.0f,0xeb/255.0f}, //white
-//{0x14/255.0f,0x14/255.0f,0x15/255.0f}, // black
-//{0x74/255.0f,0x74/255.0f,0x75/255.0f}, // grey
-//{0x14/255.0f,0x14/255.0f,0x15/255.0f}, //bg
 
 	FILE *fp = fopen(THOTH_CONFIG_FILE,"rb");
 
@@ -238,7 +225,7 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 			else if(strcmp(lineType, "MoveByWords_BACK") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_MoveByWords_BACK]);
 			else if(strcmp(lineType, "MoveByWords_FORWARD") == 0)
-				ReadCommand(&cfg->keybinds[THOTH_MoveByWords_FORWARD]);
+				ReadCommand(&cfg->keybinds[THOTH_MoveByWords_BACK]);
 			else if(strcmp(lineType, "IndentLine_FORWARD") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_IndentLine_FORWARD]);
 			else if(strcmp(lineType, "IndentLine_BACK") == 0)
