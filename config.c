@@ -225,7 +225,7 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 			else if(strcmp(lineType, "MoveByWords_BACK") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_MoveByWords_BACK]);
 			else if(strcmp(lineType, "MoveByWords_FORWARD") == 0)
-				ReadCommand(&cfg->keybinds[THOTH_MoveByWords_BACK]);
+				ReadCommand(&cfg->keybinds[THOTH_MoveByWords_FORWARD]);
 			else if(strcmp(lineType, "IndentLine_FORWARD") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_IndentLine_FORWARD]);
 			else if(strcmp(lineType, "IndentLine_BACK") == 0)
