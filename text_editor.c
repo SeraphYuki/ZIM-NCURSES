@@ -166,9 +166,7 @@ static inline int IsHexadecimal(char c){
 }
 
 static char CaseLower(char c){
-	if(c > 'A' && c < 'Z')
-		c -= 'A' - 'a';
-	return c;
+	return tolower(c);
 }
 static int CaseLowerStrnCmp(char *str, char *cmp, int len){
 	int k;
