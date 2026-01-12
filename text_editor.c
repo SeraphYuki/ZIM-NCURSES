@@ -183,7 +183,7 @@ static int IsToken(char c){
 	if(c == '(' || c == ' ' || c == '\n'|| c == ',' || c == '+' || c == '=' || c == '~' || c == '<' || 
 		c == '>' || c == '*' || c == ')' || c == '/' || c == '{' || c == '}' || c == '%' || c == '^' || 
 		c == ':' || c == '.' || c == ';' || c == ']' || c == '[' || c == '-' || c == ']' || c == '"' ||
-		c == '\''|| c == '\t'|| c == '\0' || c == '#' || c == '&' || c == '!') return 1;
+		c == '\''|| c == '|' || c == '\t'|| c == '\0' || c == '#' || c == '&' || c == '!') return 1;
 
 	return 0;
 }
@@ -2384,8 +2384,6 @@ static void UndoRemoveCharacters(Thoth_Editor *t, Thoth_EditorCmd *c){
 	for(k = t->nCursors-1; k >= 0; k--){
 
 		if(k < c->nSavedCursors && t->cursors[k].savedText){
-			t->cursors[k].selection.startCursorPos = t->cursors[k].pos;
-			t->cursors[k].selection.len = strlen(t->cursors[k].savedText);
 			AddStrToText(t, &k, t->cursors[k].savedText);
 		}
 	}
@@ -2968,7 +2966,7 @@ static void ExecuteCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	EditFunc BufferExpandFuncs[2] = {
 		AddCharacters,
- 		// RemoveCharacters
+		//RemoveCharacters
 	};
 	int BufferExpandFuncsLen = sizeof(BufferExpandFuncs)/sizeof(EditFunc);
 
@@ -2976,18 +2974,18 @@ static void ExecuteCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 	for(k = 0; k < BufferExpandFuncsLen; k++){
 		if(BufferExpandFuncs[k] == c->Execute
 			&& t->lastCmd && (*t->lastCmd)->Execute == BufferExpandFuncs[k]
-			 && c->keys && !IsToken(c->keys[0]) && 
-			 lastKeys && !IsToken((*lastKeys)[lastLen-1]))
+			 && (!c->keys || ( c->keys && !IsToken(c->keys[0]) && 
+			 lastKeys && !IsToken((*lastKeys)[lastLen-1]))))
 			{
-
-			(*t->lastCmd)->num = lastLen;
-			(*t->lastCmd)->keys = realloc(*lastKeys, lastLen + strlen(c->keys) + 1);
-			strcpy(&((*lastKeys)[lastLen]),c->keys);
-					
-			// (*t->lastCmd)->Execute(t,*t->lastCmd);
-			ExpandAddCharacters(t, *t->lastCmd);
-			(*t->lastCmd)->num = lastLen + strlen(c->keys);
-
+			if(c->keys){
+				(*t->lastCmd)->num = lastLen;
+				(*t->lastCmd)->keys = realloc(*lastKeys, lastLen + strlen(c->keys) + 1);
+				strcpy(&((*lastKeys)[lastLen]),c->keys);
+						
+				// (*t->lastCmd)->Execute(t,*t->lastCmd);
+				ExpandAddCharacters(t, *t->lastCmd);
+				(*t->lastCmd)->num = lastLen + strlen(c->keys);
+			}
 			break;
 		}
 	}

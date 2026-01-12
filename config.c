@@ -29,7 +29,7 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	strcpy(cfg->makecmd, "mingw32-make");
 	#endif
 
-	cfg->keybinds[THOTH_MoveLinesText_UP] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|THOTH_ARROW_UP;
+	cfg->keybinds[THOTH_MoveLinesText_UP] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|sTHOTH_ARROW_UP;
 	cfg->keybinds[THOTH_MoveLinesText_DOWN] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|THOTH_ARROW_DOWN;
 	cfg->keybinds[THOTH_OpenFileBrowser] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'o';
 	cfg->keybinds[THOTH_OpenFileZim] = THOTH_CTRL_KEY|'o';
@@ -60,8 +60,8 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->keybinds[THOTH_MoveByWords_FORWARD] = 'l'|THOTH_ALT_KEY|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_IndentLine_FORWARD] = ']'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_IndentLine_BACK] = '['|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_ExpandSelectionWords_BACK] = THOTH_ARROW_LEFT|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD] = THOTH_ARROW_RIGHT|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;
+	cfg->keybinds[THOTH_ExpandSelectionWords_BACK] = THOTH_ARROW_LEFT|THOTH_ALT_KEY|THOTH_CTRL_KEY;
+	cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD] = THOTH_ARROW_RIGHT|THOTH_ALT_KEY|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_ScrollScreen_UP] = THOTH_ARROW_UP|THOTH_SHIFT_KEY;
 	cfg->keybinds[THOTH_ScrollScreen_DOWN] = THOTH_ARROW_DOWN|THOTH_SHIFT_KEY;
 	cfg->keybinds[THOTH_SelectAll] = THOTH_CTRL_KEY|'a';
@@ -70,8 +70,6 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->keybinds[THOTH_Cut] = 	'x'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_Copy] = 	'c'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_Paste] ='v'|THOTH_CTRL_KEY;
-
-
 
 	memcpy(&cfg->colorPairs[THOTH_COLOR_SIDE_NUMBERS-1], (int[]){ THOTH_COLOR_WHITE, THOTH_COLOR_BLACK }, sizeof(int)*2);
 	memcpy(&cfg->colorPairs[THOTH_COLOR_NORMAL-1], (int[]){ THOTH_COLOR_WHITE, THOTH_COLOR_BLACK }, sizeof(int)*2);
@@ -113,7 +111,6 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 //{0x14/255.0f,0x14/255.0f,0x15/255.0f}, // black
 //{0x74/255.0f,0x74/255.0f,0x75/255.0f}, // grey
 //{0x14/255.0f,0x14/255.0f,0x15/255.0f}, //bg
-
 
 	FILE *fp = fopen(THOTH_CONFIG_FILE,"rb");
 

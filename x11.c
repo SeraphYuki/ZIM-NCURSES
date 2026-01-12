@@ -250,7 +250,7 @@ void X11_DrawImage(Image *image,int xPos, int yPos, int drawWidth, int drawHeigh
 	XGetWindowAttributes(display, window, &attr);
 
 	if(image == NULL){
-	    XMoveResizeWindow(display, imgWindow, 0, 0, 1, 1);
+		XMoveResizeWindow(display, imgWindow, 0, 0, 1, 1);
 		return;
 	}
 
@@ -258,64 +258,64 @@ void X11_DrawImage(Image *image,int xPos, int yPos, int drawWidth, int drawHeigh
 	drawWidth = attr.width * (image->width/image->height);
 	drawHeight = attr.height * (image->width/image->height);
 
-	  if(drawWidth <= 0) drawWidth = 1;
-	  if(drawHeight <= 0) drawHeight = 1;
+	if(drawWidth <= 0) drawWidth = 1;
+	if(drawHeight <= 0) drawHeight = 1;
 
-    float xPlus = (float)image->width / (float)drawWidth;
-	  float yPlus = (float)image->height / (float)drawHeight;
-	  char *pixels = (char*)malloc(sizeof(char) * image->width/xPlus * image->height/yPlus * 3);
+	float xPlus = (float)image->width / (float)drawWidth;
+	float yPlus = (float)image->height / (float)drawHeight;
+	char *pixels = (char*)malloc(sizeof(char) * image->width/xPlus * image->height/yPlus * 3);
 
-    int pixelIndex = 0;
-	  int xround, yround;
+	int pixelIndex = 0;
+	int xround, yround;
 
-    float x, y;
-	  for(y = 0; y < image->height; y+=yPlus){
-	      for(x = 0; x < image->width; x+=xPlus){
+	float x, y;
+	for(y = 0; y < image->height; y+=yPlus){
+		for(x = 0; x < image->width; x+=xPlus){
 
-            if(round(x/xPlus) >= drawWidth) continue;
+			if(round(x/xPlus) >= drawWidth) continue;
 
-            yround = round(y)*image->width;
-	          xround = round(x);
-	          if(xround > image->width) break;
+			yround = round(y)*image->width;
+			xround = round(x);
+			if(xround > image->width) break;
 
-            char r = image->pixels[((yround + xround)*image->channels)  ] & 0xFF;
-	          char g = image->pixels[((yround + xround)*image->channels)+1] & 0xFF;
-	          char b = image->pixels[((yround + xround)*image->channels)+2] & 0xFF;
+			char r = image->pixels[((yround + xround)*image->channels)  ] & 0xFF;
+			char g = image->pixels[((yround + xround)*image->channels)+1] & 0xFF;
+			char b = image->pixels[((yround + xround)*image->channels)+2] & 0xFF;
 
-            if(pixelIndex+3 > image->width/xPlus * image->height/yPlus * 3) goto out;
-	          pixels[pixelIndex++] = r;
-	          pixels[pixelIndex++] = g;
-	          pixels[pixelIndex++] = b;
-	      }
-	  }
-	  
-	  out:
+			if(pixelIndex+3 > image->width/xPlus * image->height/yPlus * 3) goto out;
+			pixels[pixelIndex++] = r;
+			pixels[pixelIndex++] = g;
+			pixels[pixelIndex++] = b;
+		}
+	}
+
+	out:
 
 
-	  XMoveResizeWindow(display, imgWindow, xPos, yPos, drawWidth, drawHeight);
+	XMoveResizeWindow(display, imgWindow, xPos, yPos, drawWidth, drawHeight);
 
-    XGetWindowAttributes(display, window, &attr);
+	XGetWindowAttributes(display, window, &attr);
 
 	int *newBuf = (int *)malloc(sizeof(int)*drawWidth*drawHeight);
 	int newbufIndex = 0;
 	int k;
 	for(k = 0; k < drawWidth*drawHeight*3; k+=3){
-	    int r = (pixels[k]   & 0xFF) * (attr.visual->red_mask   / 255);
-	    int g = (pixels[k+1] & 0xFF) * (attr.visual->green_mask / 255);
-	    int b = (pixels[k+2] & 0xFF) * (attr.visual->blue_mask  / 255);
-	    r &= attr.visual->red_mask;
-	    g &= attr.visual->green_mask;
-	    b &= attr.visual->blue_mask;
+		int r = (pixels[k]   & 0xFF) * (attr.visual->red_mask   / 255);
+		int g = (pixels[k+1] & 0xFF) * (attr.visual->green_mask / 255);
+		int b = (pixels[k+2] & 0xFF) * (attr.visual->blue_mask  / 255);
+		r &= attr.visual->red_mask;
+		g &= attr.visual->green_mask;
+		b &= attr.visual->blue_mask;
 
-	    newBuf[newbufIndex++] = r | g | b;
+		newBuf[newbufIndex++] = r | g | b;
 	}
 
 	image->xi = XCreateImage(display, attr.visual, 
-	    attr.depth, ZPixmap, 0, (char *)newBuf, drawWidth, drawHeight, 32, 0);
+	attr.depth, ZPixmap, 0, (char *)newBuf, drawWidth, drawHeight, 32, 0);
 
 
 	XInitImage(image->xi);
-	
+
 	XGetWindowAttributes(display, window, &attr);
 
 	XPutImage(display, imgWindow, gc, image->xi, 0, 0, 0, 0, attr.width, attr.width);

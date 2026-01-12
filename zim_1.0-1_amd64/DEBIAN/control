@@ -1,0 +1,6 @@
+Package: Zim
+Version: 1.0-1
+Architecture: amd64
+Description: Text edior in ncurses.
+ Using X11 for keybindings can use more shortcuts and load images.
+Mantainer: Blake Williamson <blake.williamson.cat@gmail.com>
