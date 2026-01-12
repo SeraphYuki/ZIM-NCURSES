@@ -60,8 +60,8 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->keybinds[THOTH_MoveByWords_FORWARD] = 'l'|THOTH_ALT_KEY|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_IndentLine_FORWARD] = ']'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_IndentLine_BACK] = '['|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_ExpandSelectionWords_BACK] = THOTH_ARROW_LEFT|THOTH_ALT_KEY|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD] = THOTH_ARROW_RIGHT|THOTH_ALT_KEY|THOTH_CTRL_KEY;
+	cfg->keybinds[THOTH_ExpandSelectionWords_BACK] = THOTH_ARROW_LEFT|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;
+	cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD] = THOTH_ARROW_RIGHT|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_ScrollScreen_UP] = THOTH_ARROW_UP|THOTH_SHIFT_KEY;
 	cfg->keybinds[THOTH_ScrollScreen_DOWN] = THOTH_ARROW_DOWN|THOTH_SHIFT_KEY;
 	cfg->keybinds[THOTH_SelectAll] = THOTH_CTRL_KEY|'a';
@@ -131,10 +131,10 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 						*keybinding |= THOTH_ARROW_DOWN;
 					else if(strcmp(bind, "ARROW_UP") == 0)
 						*keybinding |= THOTH_ARROW_UP;
-					else if(strcmp(bind, "ARROW_LEFT") == 0)
-						*keybinding |= THOTH_ARROW_LEFT;
 					else if(strcmp(bind, "ARROW_RIGHT") == 0)
 						*keybinding |= THOTH_ARROW_RIGHT;
+					else if(strcmp(bind, "ARROW_LEFT") == 0)
+						*keybinding |= THOTH_ARROW_LEFT;
 				}
 			}			
 		}
@@ -148,7 +148,6 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 			    while(!feof(fp) && fgetc(fp) != '\n'){}
 			    continue;
 			}
-			
 
 			if(strcmp(lineType, "MakeCMD") == 0)
 			    fscanf(fp, "%s", cfg->makecmd);
@@ -214,7 +213,7 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 				ReadCommand(&cfg->keybinds[THOTH_ExpandSelectionLines]);
 			else if(strcmp(lineType, "DeleteLine") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_DeleteLine]);
-			else if(strcmp(lineType, "MoveByChars_BACK") == 0)
+			else if(strcmp(lineType, "MoveByChars_BACKWARD") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_MoveByChars_BACK]);
 			else if(strcmp(lineType, "MoveByChars_FORWARD") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_MoveByChars_FORWARD]);
@@ -222,15 +221,15 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 				ReadCommand(&cfg->keybinds[THOTH_MoveLines_UP]);
 			else if(strcmp(lineType, "MoveLines_DOWN") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_MoveLines_DOWN]);
-			else if(strcmp(lineType, "MoveByWords_BACK") == 0)
+			else if(strcmp(lineType, "MoveByWords_BACKWARD") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_MoveByWords_BACK]);
 			else if(strcmp(lineType, "MoveByWords_FORWARD") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_MoveByWords_FORWARD]);
 			else if(strcmp(lineType, "IndentLine_FORWARD") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_IndentLine_FORWARD]);
-			else if(strcmp(lineType, "IndentLine_BACK") == 0)
+			else if(strcmp(lineType, "IndentLine_BACKWARD") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_IndentLine_BACK]);
-			else if(strcmp(lineType, "ExpandSelectionWords_BACK") == 0)
+			else if(strcmp(lineType, "ExpandSelectionWords_BACKWARD") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_ExpandSelectionWords_BACK]);
 			else if(strcmp(lineType, "ExpandSelectionWords_FORWARD") == 0)
 				ReadCommand(&cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD]);
