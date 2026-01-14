@@ -19,8 +19,6 @@ enum {
 
 #define MOUSEUPDATETIME 50
 
-
-
 static char configpath_g[MAX_PATH_LEN];
 
 char *Thoth_GetConfigPath(char *relpath, char *name){

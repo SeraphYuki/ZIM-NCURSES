@@ -19,8 +19,6 @@ enum {
 
 #define MOUSEUPDATETIME 50
 
-
-
 static char configpath_g[MAX_PATH_LEN];
 
 char *Thoth_GetConfigPath(char *relpath, char *name){
@@ -94,53 +92,18 @@ static HFONT    font;
 static int fontSize = 16;
 static int fontWidth = 16, fontHeight = 16;
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-static int colors[] = {
-	  0x1e1e1e,
-	  0xe6d4a3,
-	0xf73028,
-	0xaab01e,
-	0xf7b125,
-	0x719586,
-	0xc77089,
-	0x7db669,
-	0xfaefbb,
-	  0xffffff,
-	  0x31658C,
-	  0xB0EAD9,
-	  0x161819,
-	  0x161819,
-	  0xC8CACC,
-	  0xfffffff,
-	  0xfffffff,
-	  0xfffffff,
-	  0xfffffff,
-	  0xfffffff,
-	  0xfffffff,
-	  0xfffffff,
-	  0xfffffff,
-	  0xfffffff,
-	  0xfffffff,
-	  0xfffffff,
-	  0xfffffff,
-	  0xfffffff,
-	  0xfffffff,
-	  0x31658C,
-	  0x31658C,
-};
-static int colorIndex[30];
-
-
 static Thoth_t t; 
 
 HFONT Config_GetFont(){return font;}
 int Config_GetWidth(){ return fontWidth; } 
 int Config_GetHeight(){ return fontHeight; } 
 
-int Config_GetColor(int index){
-	  return ((colors[colorIndex[index]] & 0xFF0000) >> 16) |(colors[colorIndex[index]] & 0x00FF00) |
-	         ((colors[colorIndex[index]] & 0x0000FF) << 16);
-}
+int Config_GetColor(int index, int pair){
 
+	  return ((t.te.cfg->colors[t.te.cfg->colorPairs[index][pair]].r & 0xFF0000) >> 16) |
+	(t.te.cfg->colors[t.te.cfg->colorPairs[index][pair]].g & 0x00FF00) |
+	         ((t.te.cfg->colors[t.te.cfg->colorPairs[index][pair]].b & 0x0000FF) << 16);
+}
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, int nCmdShow){
 
     WNDCLASSW wc = {
@@ -197,15 +160,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 	  GetTextMetrics(hdc, &tm);
 
     ReleaseDC(NULL, hdc);
-
-    colorIndex[THOTH_COLOR_SIDE_NUMBERS] = 1;
-	  colorIndex[THOTH_COLOR_NORMAL] = 1;
-	  colorIndex[THOTH_COLOR_KEYWORD] = 5;
-	  colorIndex[THOTH_COLOR_COMMENT] = 1;
-	  colorIndex[THOTH_COLOR_TOKEN] = 3;
-	  colorIndex[THOTH_COLOR_NUM] = 2;
-	  colorIndex[THOTH_COLOR_FUNCTION] = 4;
-	  colorIndex[THOTH_COLOR_STRING] = 6;
 
 
 	  fontSize = tm.tmHeight;
