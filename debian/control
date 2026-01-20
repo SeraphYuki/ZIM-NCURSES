@@ -1,0 +1,12 @@
+Source: zimedit
+Maintainer: Blake Williamson <blake.williamson.cat@gmail.com>
+Standards-Version: 1-0.1
+Build-Depends: libncurses-dev, libx11-6, libx11-dev, libjpeg-dev, libpng-dev, debhelper
+Section: utils
+Priority: optional
+Homepage: https://github.com/seraphyuki/zim-ncurses
+
+Package: zimedit
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ncurses text editor with x11 for input

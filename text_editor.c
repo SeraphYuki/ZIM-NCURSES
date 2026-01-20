@@ -3298,11 +3298,11 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ScrollScreen_UP] , 0}, "", -1, SCR_CENT, ScrollScreen, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ScrollScreen_DOWN]  , 0}, "", 1, SCR_CENT, ScrollScreen, NULL));
+	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SelectAll]  , 0}, "", 0, SCR_NORM, SelectAll, NULL));
 	
 	AddCommand(t, CreateCommand((unsigned int[]){THOTH_ARROW_LEFT  , 0}, "", -1, SCR_NORM, MoveByChars, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){THOTH_ARROW_RIGHT  , 0}, "", 1, SCR_NORM, MoveByChars, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){THOTH_ARROW_UP  , 0}, "", -1, SCR_NORM, MoveLines, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){THOTH_CTRL_KEY|'a'  , 0}, "", 0, SCR_NORM, SelectAll, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){THOTH_ARROW_DOWN  , 0}, "", 1, SCR_NORM, MoveLines, NULL));
 
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_Undo] , 0}, "", 1, SCR_CENT, Undo, NULL));
