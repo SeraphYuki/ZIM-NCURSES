@@ -3717,7 +3717,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 	}
 
 	Thoth_attron(hdcMem,(THOTH_COLOR_NORMAL));
-	if(t->logging == THOTH_LOGMODE_CONSOLE){
+	if(t->logging == THOTH_LOGMODE_CONSOLE && t->loggingText){
 		int logLen = strlen(t->loggingText);
 #ifdef LINUX_COMPILE
 		endwin();
