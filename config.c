@@ -24,6 +24,7 @@ static void readColor( JSON_Value *val,Thoth_Config *cfg, int index){
 
 	#endif
 }
+
 	
 static void ReadCommand(JSON_Value *val, unsigned int *command){
 	*command = 0;
@@ -42,7 +43,6 @@ static void ReadCommand(JSON_Value *val, unsigned int *command){
 		}
 		val = val->next;
 	}while(val);
-	
 
 }
 	
@@ -52,17 +52,13 @@ static void configRead(JSON_Value *val, Thoth_Config *cfg){
 	if(val->next)
 		configRead(val->next, cfg);
 
-	if(val->type != JSON_ARRAY){
 	
+	if(val->type == JSON_ARRAY){
 		if(val->key){
-			if(strcmp(val->key, "MakeCMD") == 0)
-			    strcpy(cfg->makecmd, val->string);
-
-		}
-
-	} else {
-		if(val->key){
-			if(strcmp(val->key, "ExpandSelectionWords_BACKWARD") == 0)
+			if(strcmp(val->key, "MakeCMD") == 0){
+				if( val->children && val->children->string) 
+				   sprintf(cfg->makecmd, "%s",val->children->string);
+			} else if(strcmp(val->key, "ExpandSelectionWords_BACKWARD") == 0)
 				ReadCommand(val, &cfg->keybinds[THOTH_ExpandSelectionWords_BACK]);
 			else if(strcmp(val->key, "ExpandSelectionWords_FORWARD") == 0)
 				ReadCommand(val, &cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD]);
@@ -184,6 +180,20 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 		{ 0x92, 0x83 ,0x74},
 		{ 0x28, 0x28 ,0x28 },
 	};
+	
+	int k;
+	for(k = 0; k < THOTH_NUM_COLORS; k++){
+	#ifdef WINDOWS_COMPILE
+		cfg->colors[k].r = (int)defaultColors[k].r << 16;
+		cfg->colors[k].g = (int)defaultColors[k].g << 8;
+		cfg->colors[k].b = defaultColors[k].b & 0xFF;
+	#else
+		cfg->colors[k].r = defaultColors[k].r*1000/255;
+		cfg->colors[k].g = defaultColors[k].g*1000/255;
+		cfg->colors[k].b = defaultColors[k].b*1000/255;
+	#endif
+	}
+
 	#ifdef LINUX_COMPILE
 	strcpy(cfg->makecmd, "make");
 	#endif

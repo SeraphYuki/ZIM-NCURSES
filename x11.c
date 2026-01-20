@@ -383,14 +383,17 @@ void X11_NextEvent(XEvent *ev,char *clipboard){
 			if(event.target == targets_atom){
 				XChangeProperty(event.display,event.requestor,event.property,
 					4,32, PropModeReplace,(unsigned char*)&UTF8,1);
+				XSendEvent(display,event.requestor,0,0,(XEvent*)&event);
 			} else if (event.target == 31 || event.target == text_atom){
 				XChangeProperty(event.display,event.requestor,event.property,
 					31,8,PropModeReplace,(unsigned char*)clipboard, strlen(clipboard));
+				XSendEvent(display,event.requestor,0,0,(XEvent*)&event);
 			} else if(event.target == UTF8){
 				XChangeProperty(event.display,event.requestor,event.property,
 					UTF8,8,PropModeReplace,(unsigned char*)clipboard,strlen(clipboard));
+				XSendEvent(display,event.requestor,0,0,(XEvent*)&event);
 			}
-			XSendEvent(display,event.requestor,0,0,(XEvent*)&event);
+
 		}
 	}
 }
