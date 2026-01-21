@@ -198,7 +198,6 @@ int X11_LoadJPEG(FILE *fp, Image *image){
 	jmp_buf jmp_buffer;
 	int err = 0;
 
-
 	info.err = jpeg_std_error(&jerror);
 
 	void func(j_common_ptr cinfo){
@@ -245,15 +244,14 @@ int X11_LoadJPEG(FILE *fp, Image *image){
 
 void X11_DrawImage(Image *image,int xPos, int yPos, int drawWidth, int drawHeight){
 
-	XWindowAttributes attr;
 	XMapWindow(display, imgWindow);
-	XGetWindowAttributes(display, window, &attr);
-
 	if(image == NULL){
 		XMoveResizeWindow(display, imgWindow, 0, 0, 1, 1);
 		return;
 	}
 
+	XWindowAttributes attr;
+	XGetWindowAttributes(display, window, &attr);
 
 	drawWidth = attr.width * (image->width/image->height);
 	drawHeight = attr.height * (image->width/image->height);

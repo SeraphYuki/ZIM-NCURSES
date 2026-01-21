@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <ncurses.h>
 #include <stdlib.h>
 #include <string.h>
 #include "config.h"
@@ -10,9 +9,10 @@ static void readColor( JSON_Value *val,Thoth_Config *cfg, int index){
 	int x;
 	int y;
 	int z;
-	scanf(val->string,"%x", &x);	
-	scanf(val->next->string,"%x", &y);	
-	scanf(val->next->next->string,"%x", &z);	
+	val = val->children;
+	sscanf(val->string,"%x", &x);	
+	sscanf(val->next->string,"%x", &y);	
+	sscanf(val->next->next->string,"%x", &z);	
 	#ifdef WINDOWS_COMPILE
 		cfg->colors[index].r = (int)x << 16;
 		cfg->colors[index].g = (int)y << 8;
@@ -160,8 +160,8 @@ static void configRead(JSON_Value *val, Thoth_Config *cfg){
 		else if(val->children)
 			configRead(val->children, cfg);
 	}
-
 }
+
 void Thoth_Config_Read(Thoth_Config *cfg){
 	memset(cfg, 0, sizeof(Thoth_Config));
 	struct{
