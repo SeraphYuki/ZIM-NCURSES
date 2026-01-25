@@ -4,9 +4,7 @@ EXECUTABLE=zimedit
 CFLAGS = -g -Wall -lm -DLINUX_COMPILE -DLINUX_INSTALL
 LIBS = -lncurses  $(shell pkg-config --libs x11) -lpng -ljpeg -lz
 LDLIBS = -lm -static-libgcc $(LIBS)
-SOURCES=main.c \
-text_editor.c log.c file_browser.c config.c x11.c json.c
-
+SOURCES=main.c text_editor.c log.c file_browser.c config.c x11.c json.c
 
 #CC = i686-w64-mingw32-gcc
 #EXECUTABLE=zim.exe
@@ -41,7 +39,6 @@ $(EXECUTABLE): $(OBJECTS)
 
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
-
 
 install:
 	mkdir -p $(DESTDIR)/usr/bin/

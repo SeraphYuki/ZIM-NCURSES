@@ -253,8 +253,8 @@ void X11_DrawImage(Image *image,int xPos, int yPos, int drawWidth, int drawHeigh
 	XWindowAttributes attr;
 	XGetWindowAttributes(display, window, &attr);
 
-	drawWidth = attr.width * (image->width/image->height);
-	drawHeight = attr.height * (image->width/image->height);
+	drawWidth = attr.width;
+	drawHeight = attr.height;
 
 	if(drawWidth <= 0) drawWidth = 1;
 	if(drawHeight <= 0) drawHeight = 1;
@@ -290,7 +290,6 @@ void X11_DrawImage(Image *image,int xPos, int yPos, int drawWidth, int drawHeigh
 	out:
 
 
-	XMoveResizeWindow(display, imgWindow, xPos, yPos, drawWidth, drawHeight);
 
 	XGetWindowAttributes(display, window, &attr);
 
@@ -315,8 +314,9 @@ void X11_DrawImage(Image *image,int xPos, int yPos, int drawWidth, int drawHeigh
 	XInitImage(image->xi);
 
 	XGetWindowAttributes(display, window, &attr);
+	XMoveResizeWindow(display, imgWindow, xPos, yPos, attr.width, attr.height);
 
-	XPutImage(display, imgWindow, gc, image->xi, 0, 0, 0, 0, attr.width, attr.width);
+	XPutImage(display, imgWindow, gc, image->xi, 0, 0, 0, 0, drawWidth, drawHeight);
 	XDestroyImage(image->xi);
 }
 void X11_DestroyImage(Image *image){
@@ -357,9 +357,10 @@ void X11_Paste(char **clipboard){
 			XDeleteProperty(ev.xselection.display,ev.xselection.requestor,ev.xselection.property);
 		}
 	}
-	XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
+	XSetInputFocus(display, window, RevertToParent, CurrentTime);
 	XSetICFocus(ic);
 	XSelectInput(display, window, KeyPress | KeyRelease | FocusChangeMask);
+
 }
 
 void X11_NextEvent(XEvent *ev,char *clipboard){
@@ -367,9 +368,8 @@ void X11_NextEvent(XEvent *ev,char *clipboard){
 	XNextEvent(display,ev);
 
 	if(ev->type == FocusIn && ev->xfocus.window == parent){
-		XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
+		XSetInputFocus(display, window, RevertToParent, CurrentTime);
 		XSetICFocus(ic);
-		XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
 	  } else if(ev->type == SelectionRequest){
 		
 		if(ev->xselectionrequest.selection == selection){

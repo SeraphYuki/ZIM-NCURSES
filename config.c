@@ -6,32 +6,30 @@
 #include "json.h"
 
 static void readColor( JSON_Value *val,Thoth_Config *cfg, int index){
-	int x;
-	int y;
-	int z;
-	val = val->children;
-	sscanf(val->string,"%x", &x);	
-	sscanf(val->next->string,"%x", &y);	
-	sscanf(val->next->next->string,"%x", &z);	
+	int x = 0;
+	if(!val->children ||  !val->children->string) return;
+	sscanf(val->children->string,"%x", &x);	
 	#ifdef WINDOWS_COMPILE
 		cfg->colors[index].r = (int)x << 16;
-		cfg->colors[index].g = (int)y << 8;
-		cfg->colors[index].b = z & 0xFF;
+		cfg->colors[index].g = (int)(x << 8) & 0xFF;
+		cfg->colors[index].b = x & 0xFF;
 	#else
-		cfg->colors[index].r = x*1000/255;
-		cfg->colors[index].g = y*1000/255;
-		cfg->colors[index].b = z*1000/255;
+		cfg->colors[index].r = (x>>16)*1000/255;
+		cfg->colors[index].g = ((x>>8)&0xFF)*1000/255;
+		cfg->colors[index].b = (x&0xFF)*1000/255;
 
 	#endif
+	printf("%s %.6x\n", val->key,x);
 }
 
 	
 static void ReadCommand(JSON_Value *val, unsigned int *command){
 	*command = 0;
+	printf("%s\n",val->key);
 	val = val->children;
+	if(!val) return;
 	do{
 		if(val->type == JSON_STRING) {
-		
 			if(strcmp(val->string, "CTRL") == 0) *command |= THOTH_CTRL_KEY;
 			else if(strcmp(val->string, "SHIFT") == 0) *command |= THOTH_SHIFT_KEY;
 			else if(strcmp(val->string, "ALT") == 0) *command |= THOTH_ALT_KEY;
@@ -40,126 +38,125 @@ static void ReadCommand(JSON_Value *val, unsigned int *command){
 			else if(strcmp(val->string, "ARROW_DOWN") == 0) *command |= THOTH_ARROW_DOWN;
 			else if(strcmp(val->string, "ARROW_LEFT") == 0) *command |= THOTH_ARROW_LEFT;
 			else if(strlen(val->string) == 1) *command |= val->string[0];
+			printf("\t%s\n", val->string);
 		}
 		val = val->next;
 	}while(val);
-
 }
 	
-static void configRead(JSON_Value *val, Thoth_Config *cfg){
+static void ConfigRead(JSON_Value *val, Thoth_Config *cfg){
 
+	do{
 
-	if(val->next)
-		configRead(val->next, cfg);
-
-	
-	if(val->type == JSON_ARRAY){
-		if(val->key){
-			if(strcmp(val->key, "MakeCMD") == 0){
-				if( val->children && val->children->string) 
-				   sprintf(cfg->makecmd, "%s",val->children->string);
-			} else if(strcmp(val->key, "ExpandSelectionWords_BACKWARD") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_ExpandSelectionWords_BACK]);
-			else if(strcmp(val->key, "ExpandSelectionWords_FORWARD") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD]);
-			else if(strcmp(val->key, "SelectAll") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_SelectAll]);
-			else if(strcmp(val->key, "COLOR_CYAN") == 0)
-			    readColor(val, cfg,  THOTH_COLOR_CYAN);
-			else if(strcmp(val->key, "COLOR_RED") == 0)
-			    readColor(val, cfg,  THOTH_COLOR_RED);
-			else if(strcmp(val->key, "COLOR_YELLOW") == 0)
-			    readColor(val, cfg,  THOTH_COLOR_YELLOW);
-			else if(strcmp(val->key, "COLOR_BLUE") == 0)
-			    readColor(val, cfg,  THOTH_COLOR_BLUE);
-			else if(strcmp(val->key, "COLOR_GREEN") == 0)
-			    readColor(val, cfg,  THOTH_COLOR_GREEN);
-			else if(strcmp(val->key, "COLOR_MAGENTA") == 0)
-			    readColor(val, cfg,  THOTH_COLOR_MAGENTA);
-			else if(strcmp(val->key, "COLOR_WHITE") == 0)
-			    readColor(val, cfg,  THOTH_COLOR_WHITE);
-			else if(strcmp(val->key, "COLOR_BLACK") == 0)
-			    readColor(val, cfg,  THOTH_COLOR_BLACK);
-			else if(strcmp(val->key, "COLOR_GREY") == 0)
-			    readColor(val, cfg,  THOTH_COLOR_GREY);
-			else if(strcmp(val->key, "COLOR_BG") == 0)
-			    readColor(val, cfg,  THOTH_COLOR_BG);
-			else if(strcmp(val->key, "MoveLinesText_UP") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_MoveLinesText_UP]);
-			else if(strcmp(val->key, "MoveLinesText_DOWN") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_MoveLinesText_DOWN]);
-			else if(strcmp(val->key, "OpenFileBrowser") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_OpenFileBrowser]);
-			else if(strcmp(val->key, "NewFile") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_NewFile]);
-			else if(strcmp(val->key, "CloseFile") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_CloseFile]);
-			else if(strcmp(val->key, "SwitchFile") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_SwitchFile]);
-			else if(strcmp(val->key, "SaveAsFile") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_SaveAsFile]);
-			else if(strcmp(val->key, "SaveFile") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_SaveFile]);
-			else if(strcmp(val->key, "ToggleComment") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_ToggleComment]);
-			else if(strcmp(val->key, "ToggleCommentMulti") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_ToggleCommentMulti]);
-			else if(strcmp(val->key, "MoveBrackets") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_MoveBrackets]);
-			else if(strcmp(val->key, "SelectBrackets") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_SelectBrackets]);
-			else if(strcmp(val->key, "GotoLine") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_GotoLine]);
-			else if(strcmp(val->key, "FindTextInsensitive") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_FindTextInsensitive]);
-			else if(strcmp(val->key, "FindTextZim") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_FindTextZim]);
-			else if(strcmp(val->key, "EventCtrlEnter") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_EventCtrlEnter]);
-			else if(strcmp(val->key, "SelectNextWord") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_SelectNextWord]);
-			else if(strcmp(val->key, "AddCursorCommand_UP") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_AddCursorCommand_UP]);
-			else if(strcmp(val->key, "AddCursorCommand_DOWN") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_AddCursorCommand_DOWN]);
-			else if(strcmp(val->key, "ExpandSelectionLines") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_ExpandSelectionLines]);
-			else if(strcmp(val->key, "DeleteLine") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_DeleteLine]);
-			else if(strcmp(val->key, "MoveByChars_BACKWARD") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_MoveByChars_BACK]);
-			else if(strcmp(val->key, "MoveByChars_FORWARD") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_MoveByChars_FORWARD]);
-			else if(strcmp(val->key, "MoveLines_UP") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_MoveLines_UP]);
-			else if(strcmp(val->key, "MoveLines_DOWN") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_MoveLines_DOWN]);
-			else if(strcmp(val->key, "MoveByWords_BACKWARD") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_MoveByWords_BACK]);
-			else if(strcmp(val->key, "MoveByWords_FORWARD") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_MoveByWords_FORWARD]);
-			else if(strcmp(val->key, "IndentLine_FORWARD") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_IndentLine_FORWARD]);
-			else if(strcmp(val->key, "IndentLine_BACKWARD") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_IndentLine_BACK]);
-			else if(strcmp(val->key, "ScrollScreen_UP") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_ScrollScreen_UP]);
-			else if(strcmp(val->key, "ScrollScreen_DOWN") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_ScrollScreen_DOWN]);
-			else if(strcmp(val->key, "Undo") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_Undo]);
-			else if(strcmp(val->key, "Redo") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_Redo]);
-			else if(strcmp(val->key, "Cut") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_Cut]);
-			else if(strcmp(val->key, "Copy") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_Copy]);
-			else if(strcmp(val->key, "Paste") == 0)
-				ReadCommand(val, &cfg->keybinds[THOTH_Paste]);
+		if(val->type == JSON_ARRAY){
+			if(val->key){
+				if(strcmp(val->key, "MakeCMD") == 0){
+					if( val->children && val->children->string) 
+					   sprintf(cfg->makecmd, "%s",val->children->string);
+				} else if(strcmp(val->key, "ExpandSelectionWords_BACKWARD") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_ExpandSelectionWords_BACK]);
+				else if(strcmp(val->key, "ExpandSelectionWords_FORWARD") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD]);
+				else if(strcmp(val->key, "SelectAll") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_SelectAll]);
+				else if(strcmp(val->key, "COLOR_CYAN") == 0)
+				    readColor(val, cfg,  THOTH_COLOR_CYAN);
+				else if(strcmp(val->key, "COLOR_RED") == 0)
+				    readColor(val, cfg,  THOTH_COLOR_RED);
+				else if(strcmp(val->key, "COLOR_YELLOW") == 0)
+				    readColor(val, cfg,  THOTH_COLOR_YELLOW);
+				else if(strcmp(val->key, "COLOR_BLUE") == 0)
+				    readColor(val, cfg,  THOTH_COLOR_BLUE);
+				else if(strcmp(val->key, "COLOR_GREEN") == 0)
+				    readColor(val, cfg,  THOTH_COLOR_GREEN);
+				else if(strcmp(val->key, "COLOR_MAGENTA") == 0)
+				    readColor(val, cfg,  THOTH_COLOR_MAGENTA);
+				else if(strcmp(val->key, "COLOR_WHITE") == 0)
+				    readColor(val, cfg,  THOTH_COLOR_WHITE);
+				else if(strcmp(val->key, "COLOR_BLACK") == 0)
+				    readColor(val, cfg,  THOTH_COLOR_BLACK);
+				else if(strcmp(val->key, "COLOR_GREY") == 0)
+				    readColor(val, cfg,  THOTH_COLOR_GREY);
+				else if(strcmp(val->key, "COLOR_BG") == 0)
+				    readColor(val, cfg,  THOTH_COLOR_BG);
+				else if(strcmp(val->key, "MoveLinesText_UP") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_MoveLinesText_UP]);
+				else if(strcmp(val->key, "MoveLinesText_DOWN") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_MoveLinesText_DOWN]);
+				else if(strcmp(val->key, "OpenFileBrowser") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_OpenFileBrowser]);
+				else if(strcmp(val->key, "NewFile") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_NewFile]);
+				else if(strcmp(val->key, "CloseFile") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_CloseFile]);
+				else if(strcmp(val->key, "SwitchFile") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_SwitchFile]);
+				else if(strcmp(val->key, "SaveAsFile") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_SaveAsFile]);
+				else if(strcmp(val->key, "SaveFile") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_SaveFile]);
+				else if(strcmp(val->key, "ToggleComment") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_ToggleComment]);
+				else if(strcmp(val->key, "ToggleCommentMulti") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_ToggleCommentMulti]);
+				else if(strcmp(val->key, "MoveBrackets") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_MoveBrackets]);
+				else if(strcmp(val->key, "SelectBrackets") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_SelectBrackets]);
+				else if(strcmp(val->key, "GotoLine") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_GotoLine]);
+				else if(strcmp(val->key, "FindTextInsensitive") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_FindTextInsensitive]);
+				else if(strcmp(val->key, "FindTextZim") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_FindTextZim]);
+				else if(strcmp(val->key, "EventCtrlEnter") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_EventCtrlEnter]);
+				else if(strcmp(val->key, "SelectNextWord") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_SelectNextWord]);
+				else if(strcmp(val->key, "AddCursorCommand_UP") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_AddCursorCommand_UP]);
+				else if(strcmp(val->key, "AddCursorCommand_DOWN") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_AddCursorCommand_DOWN]);
+				else if(strcmp(val->key, "ExpandSelectionLines") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_ExpandSelectionLines]);
+				else if(strcmp(val->key, "DeleteLine") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_DeleteLine]);
+				else if(strcmp(val->key, "MoveByChars_BACKWARD") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_MoveByChars_BACK]);
+				else if(strcmp(val->key, "MoveByChars_FORWARD") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_MoveByChars_FORWARD]);
+				else if(strcmp(val->key, "MoveLines_UP") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_MoveLines_UP]);
+				else if(strcmp(val->key, "MoveLines_DOWN") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_MoveLines_DOWN]);
+				else if(strcmp(val->key, "MoveByWords_BACKWARD") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_MoveByWords_BACK]);
+				else if(strcmp(val->key, "MoveByWords_FORWARD") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_MoveByWords_FORWARD]);
+				else if(strcmp(val->key, "IndentLine_FORWARD") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_IndentLine_FORWARD]);
+				else if(strcmp(val->key, "IndentLine_BACKWARD") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_IndentLine_BACK]);
+				else if(strcmp(val->key, "ScrollScreen_UP") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_ScrollScreen_UP]);
+				else if(strcmp(val->key, "ScrollScreen_DOWN") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_ScrollScreen_DOWN]);
+				else if(strcmp(val->key, "Undo") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_Undo]);
+				else if(strcmp(val->key, "Redo") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_Redo]);
+				else if(strcmp(val->key, "Cut") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_Cut]);
+				else if(strcmp(val->key, "Copy") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_Copy]);
+				else if(strcmp(val->key, "Paste") == 0)
+					ReadCommand(val, &cfg->keybinds[THOTH_Paste]);
+			}
+			else if(val->children)
+				ConfigRead(val->children, cfg);
 		}
-		else if(val->children)
-			configRead(val->children, cfg);
-	}
+		val = val->next;
+	} while(val);
 }
 
 void Thoth_Config_Read(Thoth_Config *cfg){
@@ -283,6 +280,9 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	fread(memory,1,len,fp);
 		
 	JSON_Parse(&top,memory,len,stack,stackEnd,16);
-	configRead(top, cfg);	
+
+	ConfigRead(top, cfg);	
+
 	free(stack);
+
 }

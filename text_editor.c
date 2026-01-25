@@ -84,7 +84,7 @@ static void SwitchFile(Thoth_Editor *t, Thoth_EditorCmd *c);
 void Thoth_Editor_LoadFile(Thoth_Editor *t, char *path);
 static void SaveAsFile(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void SaveFile(Thoth_Editor *t, Thoth_EditorCmd *c);
-// static void RefreshEditorCommand(Thoth_EditorCmd *c);
+static void RefreshEditorCommand(Thoth_EditorCmd *c);
 static void ResolveCursorCollisions(Thoth_Editor *t, int *cursorIndex);
 static void MoveCursorsAndSelection(Thoth_Editor *t, int pos, int by, int *cursorIndex);
 static void MoveLineUp(Thoth_Editor *t, Thoth_EditorCur *c);
@@ -100,7 +100,7 @@ static void InitCursors(Thoth_Editor *t);
 static int MoveCursorUpLine(Thoth_Editor *t, Thoth_EditorCur *cursor);
 static int MoveCursorDownLine(Thoth_Editor *t, Thoth_EditorCur *cursor);
 static void MoveLines(Thoth_Editor *t, Thoth_EditorCmd *c);
-// static void ExpandSelectionChars(Thoth_Editor *t,Thoth_EditorCmd *c);
+static void ExpandSelectionChars(Thoth_Editor *t,Thoth_EditorCmd *c);
 static void ExpandSelectionWords(Thoth_Editor *t,Thoth_EditorCmd *c);
 static void AddCursorCommand(Thoth_Editor *t, Thoth_EditorCmd *c);
 static Thoth_EditorCur *AddCursor(Thoth_Editor *t);
@@ -1509,29 +1509,56 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 		
 		int curline = 0;
 		for(k = 0; k < t->nCursors; k++){
-				int start = curline;
-				char tmp = 0;
-				for(; curline < clipboardLen; curline++){
-					if(clipboard[curline] == '\n'){
-						tmp = clipboard[curline];
-						clipboard[curline] = 0;
-						break;
-					}
+			int start = curline;
+			char tmp = 0;
+			for(; curline < clipboardLen; curline++){
+				if(clipboard[curline] == '\n'){
+					tmp = clipboard[curline];
+					clipboard[curline] = 0;
+					break;
+				}
+			}
+
+			if(k == 0){ // elastic 
+				int into = t->cursors[k].pos - GetCharsIntoLine(t->file->text, t->cursors[k].pos);
+				int tabs = 0;
+				int j;
+				for(j = into; j < t->cursors[k].pos && start + tabs < clipboardLen; j++, tabs++){
+					if(t->file->text[j] != '\t' || clipboard[start+tabs] != '\t') break;
 				}
 				
-				EraseAllSelectedText(t, &k, c);
-				AddStrToText(t, &k, &clipboard[start]);
-				clipboard[curline] = tmp;
-				t->cursors[k].addedLen = curline - start;
-				curline++;
+				if(j == t->cursors[k].pos){
+					start += tabs;
+				}
+			}
+
+			EraseAllSelectedText(t, &k, c);
+			AddStrToText(t, &k, &clipboard[start]);
+			clipboard[curline] = tmp;
+			t->cursors[k].addedLen = curline - start;
+			curline++;
 		}		
 
 	} else {
 
 		for(k = 0; k < t->nCursors; k++){
-				EraseAllSelectedText(t, &k, c);
-				AddStrToText(t, &k, clipboard);
-				t->cursors[k].addedLen = clipboardLen;
+			// elastic
+			int into = t->cursors[k].pos - GetCharsIntoLine(t->file->text, t->cursors[k].pos);
+			int tabs = 0;
+			int j;
+			for(j = into; j < t->cursors[k].pos &&  tabs < clipboardLen; j++, tabs++){
+				if(t->file->text[j] != '\t' || clipboard[tabs] != '\t') break;
+			}
+			
+			if(j == t->cursors[k].pos){
+				clipboard += tabs;
+				clipboardLen -= tabs;
+			}
+			
+
+			EraseAllSelectedText(t, &k, c);
+			AddStrToText(t, &k, clipboard);
+			t->cursors[k].addedLen = clipboardLen;
 		}
 
 	}
@@ -2127,6 +2154,8 @@ static void Copy(Thoth_Editor *t, Thoth_EditorCmd *c){
 			buffer = malloc(bufferLen+1);
 			buffer[bufferLen] = 0;
 			if(t->nCursors > 1) buffer[bufferLen - 1] = '\n';
+
+			
 			memcpy(buffer, &t->file->text[start], end-start);
 		}
 
@@ -3234,7 +3263,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	init_pair(THOTH_COLOR_LOG_UNSELECTED, COLOR_BLACK, COLOR_WHITE);
 	init_pair(THOTH_COLOR_CURSOR,COLOR_BLACK ,COLOR_MAGENTA);
 	init_pair(THOTH_COLOR_FIND, COLOR_BLACK ,COLOR_WHITE);
-	init_pair(THOTH_COLOR_LINE_NUM, COLOR_WHITE ,COLOR_BLACK);
+	init_pair(THOTH_COLOR_LINE_NUM, COLOR_WHITE ,-1);
 	init_pair(THOTH_COLOR_LINENUM_CURSOR, COLOR_BLACK ,COLOR_GREEN);
 	init_pair(THOTH_TE_COLOR_BLACK, COLOR_BLACK ,-1);
 	init_pair(THOTH_TE_COLOR_WHITE, -1 ,-1);

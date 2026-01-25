@@ -1,3 +1,13 @@
+zimedit (1-0.3) jammy; urgency=medium 
+
+ -- yuki <blake.williamson.cat@gmail.com>  Fri, 23 Jan 2026 12:50:38 -0800
+
+zimedit (1-0.2) jammy; urgency=medium
+
+  * Updates to colors
+
+ -- Blake Williamson <blake.williamson.cat@gmail.com>  Thu, 22 Jan 2026 20:30:15 -0800
+
 zimedit (1-0.1) jammy; urgency=medium
 
   * Initial release. (Closes: #XXXXXX)

@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include "json.h"
 
-#define ALIGN_UP(T, offset, align) (T)(((uintptr_t)offset + align - 1) & ~(align-1))
+#define ALIGN_UP(T, offset, align) (T)((uintptr_t)offset)
 
 static void *ParserStackAlloc(JSON_Parser *parser, int size){
 
