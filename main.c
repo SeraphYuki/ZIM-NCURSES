@@ -76,7 +76,10 @@ void Event(Thoth_t *t){
 	XEvent ev;
 	X11_NextEvent(&ev,t->te.clipboard);
 
-	
+	if(ev.type == FocusIn){ 
+		t->key = 0;
+	}
+
 	if(ev.type == KeyPress){
 		
 		int key = t->key & THOTH_ENTER_KEY ? t->key ^ THOTH_ENTER_KEY : t->key;
