@@ -360,7 +360,6 @@ void X11_Paste(char **clipboard){
 	XSetInputFocus(display, window, RevertToParent, CurrentTime);
 	XSetICFocus(ic);
 	XSelectInput(display, window, KeyPress | KeyRelease | FocusChangeMask);
-
 }
 
 void X11_NextEvent(XEvent *ev,char *clipboard){
@@ -368,8 +367,8 @@ void X11_NextEvent(XEvent *ev,char *clipboard){
 	XNextEvent(display,ev);
 
 	if(ev->type == FocusIn && ev->xfocus.window == parent){
-		XSetInputFocus(display, window, RevertToParent, CurrentTime);
-		XSetICFocus(ic);
+		//XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
+		//XSetICFocus(ic);
 	  } else if(ev->type == SelectionRequest){
 		
 		if(ev->xselectionrequest.selection == selection){
@@ -382,7 +381,7 @@ void X11_NextEvent(XEvent *ev,char *clipboard){
 				XChangeProperty(event.display,event.requestor,event.property,
 					4,32, PropModeReplace,(unsigned char*)&UTF8,1);
 				XSendEvent(display,event.requestor,0,0,(XEvent*)&event);
-			} else if (event.target == 31 || event.target == text_atom){
+			} else if ( event.target == text_atom || event.target == 31){
 				XChangeProperty(event.display,event.requestor,event.property,
 					31,8,PropModeReplace,(unsigned char*)clipboard, strlen(clipboard));
 				XSendEvent(display,event.requestor,0,0,(XEvent*)&event);
@@ -391,7 +390,6 @@ void X11_NextEvent(XEvent *ev,char *clipboard){
 					UTF8,8,PropModeReplace,(unsigned char*)clipboard,strlen(clipboard));
 				XSendEvent(display,event.requestor,0,0,(XEvent*)&event);
 			}
-
 		}
 	}
 }
