@@ -226,7 +226,6 @@ static void EndLogging(Thoth_Editor *t){
 	t->logIndex = -1;
 #ifdef LINUX_COMPILE
 		bkgd(COLOR_PAIR(THOTH_COLOR_NORMAL));	
-		wclear(stdscr);
 #endif
 	if(t->loggingText) free(t->loggingText);
 
