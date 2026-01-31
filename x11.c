@@ -367,8 +367,8 @@ void X11_NextEvent(XEvent *ev,char *clipboard){
 	XNextEvent(display,ev);
 
 	if(ev->type == FocusIn && ev->xfocus.window == parent){
-		//XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
-		//XSetICFocus(ic);
+		XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
+		XSetICFocus(ic);
 	  } else if(ev->type == SelectionRequest){
 		
 		if(ev->xselectionrequest.selection == selection){

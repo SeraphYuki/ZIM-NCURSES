@@ -229,8 +229,8 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->keybinds[THOTH_MoveByWords_FORWARD] = 'l'|THOTH_ALT_KEY|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_IndentLine_FORWARD] = ']'|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_IndentLine_BACK] = '['|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_ExpandSelectionWords_BACK] = THOTH_ARROW_LEFT|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;
-	cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD] = THOTH_ARROW_RIGHT|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;
+	cfg->keybinds[THOTH_ExpandSelectionWords_BACK] = 'h'|THOTH_ALT_KEY|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;
+	cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD] = 'l'|THOTH_ALT_KEY|THOTH_SHIFT_KEY|THOTH_CTRL_KEY;
 	cfg->keybinds[THOTH_ScrollScreen_UP] = THOTH_ARROW_UP|THOTH_SHIFT_KEY;
 	cfg->keybinds[THOTH_ScrollScreen_DOWN] = THOTH_ARROW_DOWN|THOTH_SHIFT_KEY;
 	cfg->keybinds[THOTH_SelectAll] = THOTH_CTRL_KEY|'a';
@@ -269,6 +269,7 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->tabs = DEFAULT_TAB_WIDTH;
 
 	FILE *fp = fopen(THOTH_CONFIG_FILE,"rb");
+	if(!fp) return;
 	void *stack = malloc(2048<<1);
 	void *stackEnd = stack + (2048<<1);
 	JSON_Value *top;

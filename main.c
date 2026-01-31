@@ -11,6 +11,7 @@
 #include "thoth.h"
 #include "x11.h"
 
+
 enum {
 	THOTH_STATE_QUIT = 1,
 	THOTH_STATE_UPDATE,
@@ -79,6 +80,7 @@ void Event(Thoth_t *t){
 	if(ev.type == FocusIn){
 		endwin();
 		initscr();
+		t->key = 0;
 		t->state = THOTH_STATE_UPDATE;
 	}
 	if(ev.type == KeyPress){

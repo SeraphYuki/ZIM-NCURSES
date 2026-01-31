@@ -2,7 +2,7 @@
 CC=gcc
 EXECUTABLE=zimedit
 CFLAGS = -g -Wall -lm -DLINUX_COMPILE -DLINUX_INSTALL
-LIBS = -lncurses  $(shell pkg-config --libs x11) -lpng -ljpeg -lz
+LIBS = -lncurses -lX11 -lpng -ljpeg -lz
 LDLIBS = -lm -static-libgcc $(LIBS)
 SOURCES=main.c text_editor.c log.c file_browser.c config.c x11.c json.c
 
