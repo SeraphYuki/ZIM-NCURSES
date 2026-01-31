@@ -77,9 +77,9 @@ void Event(Thoth_t *t){
 	XEvent ev;
 	X11_NextEvent(&ev,t->te.clipboard);
 
-	if(ev.type == FocusIn){
-		endwin();
-		initscr();
+	if(ev.type == FocusIn ){
+		//endwin();
+		//initscr();
 		t->key = 0;
 		t->state = THOTH_STATE_UPDATE;
 	}
