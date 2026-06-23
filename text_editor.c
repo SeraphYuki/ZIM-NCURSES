@@ -1560,6 +1560,8 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 	if(c->keys && strlen(c->keys)){
 		clipboard = c->keys;
 	} else {
+		if(!clipboard) return;
+		
 		if(c->keys) free(c->keys);
 		c->keys = malloc(strlen(clipboard)+1);
 		strcpy(c->keys,clipboard);
@@ -2416,7 +2418,7 @@ static void UndoCut(Thoth_Editor *t, Thoth_EditorCmd *c){
 	int k;
 	for(k = t->nCursors-1; k >= 0; k--){
 		int pos = t->cursors[k].pos;
-		
+		t->cursors[k].pos = t->cursors[k].selection.startCursorPos;		
 		if(k < c->nSavedCursors && t->cursors[k].savedText){
 			AddStrToText(t, &k, t->cursors[k].savedText);
 		}
@@ -3048,6 +3050,7 @@ static void Redo(Thoth_Editor *t, Thoth_EditorCmd *c){
 }
 
 static void FreeCommand(Thoth_EditorCmd *c){
+	if(!c) return;
 
 	if(c->keys) free(c->keys);
 
